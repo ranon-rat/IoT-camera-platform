@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 func registerUser(w http.ResponseWriter, r *http.Request){
@@ -12,6 +13,12 @@ func registerUser(w http.ResponseWriter, r *http.Request){
 	var newUser register
 	json.NewDecoder(r.Body).Decode(&newUser)
 	newUser.IP=r.Header.Get("x-forwarded-for")
+	errChan:=make(chan error)
+	
+	go registerUserCameraDatabase(newUser,errChan)
+	if <-errChan!=nil{
+		log.Println(<-errChan)
+	}
 	break
 
 	default :
