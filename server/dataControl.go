@@ -1,21 +1,25 @@
 package main
 
 import (
-	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 
+	"golang.org/x/crypto/bcrypt"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func encryptData(data string) *string {
 
-   	h := sha256.New()// we encript the data
-	h.Write([]byte(data))
-	v:=hex.EncodeToString(h.Sum(nil))
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data), bcrypt.DefaultCost)// we encript the data
+	if err!=nil{
+		log.Println(err)
+		return nil
+	}
+	v:=hex.EncodeToString(hashedPassword)
 	return  &v
 
  
@@ -124,7 +128,7 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 	r, err := stm.Exec(
 		encryptData(user.IP), 
 		encryptData(user.Password), 
-		encryptData(user.Username),
+		user.Username,
 	)
 	if err != nil {
 		log.Println(err)

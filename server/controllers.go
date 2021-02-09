@@ -15,10 +15,10 @@ func registerUser(w http.ResponseWriter, r *http.Request){
 	break
 
 	default :
+	/*
 	
+	*/
 	w.Write([]byte("you cant do that 😡"))
 	break
 	}
-	
-
 }
