@@ -13,7 +13,7 @@ import (
 
 func encryptData(data string) *string {
 
-   h := sha256.New()
+   	h := sha256.New()// we encript the data
 	h.Write([]byte(data))
 	v:=hex.EncodeToString(h.Sum(nil))
 	return  &v
@@ -90,7 +90,7 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 	VALUES(?1,?2,?3,?4) `
 	/*
 	this is how the table is
-	_________________________________________
+	__________________________________________
 	|				usercameras				 |
 	|----------------------------------------|
 	|		name 		|        type		 |	
@@ -100,6 +100,7 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 	|password			|TEXT 				 |
 	|username 			|TEXT 		 		 |
 	|last_time_login 	|INTEGER			 |
+	|----------------------------------------|
 	*/
 	// we get the connection
 	db,err:=getConnection()
