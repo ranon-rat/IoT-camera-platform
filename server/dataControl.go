@@ -91,15 +91,15 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 	/*
 	this is how the table is
 	__________________________________________
-	|				usercameras				 |
+	|               usercameras              |
 	|----------------------------------------|
-	|		name 		|        type		 |	
+	|		name        |        type        |	
 	|-------------------|--------------------|
-	|id 				|INTEGER PRIMARY KEY |
-	|ip 				|VARCHAR(64) 		 |
-	|password			|TEXT 				 |
-	|username 			|TEXT 		 		 |
-	|last_time_login 	|INTEGER			 |
+	|id                 |INTEGER PRIMARY KEY |
+	|ip                 |VARCHAR(64)         |
+	|password           |TEXT                |
+	|username           |TEXT                |
+	|last_time_login    |INTEGER             |
 	|----------------------------------------|
 	*/
 	// we get the connection
