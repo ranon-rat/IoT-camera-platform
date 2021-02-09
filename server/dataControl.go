@@ -75,7 +75,7 @@ func exist(user string,ip string,sizeChan chan int) error{
 	return nil
 
 }
-
+// register func
 func registerUserCameraDatabase(user register,errChan chan error) {
 	sizeChan:=make(chan int)
 	// we check if the username of the camera already exist
@@ -150,3 +150,7 @@ func registerUserCameraDatabase(user register,errChan chan error) {
 	
 	close(errChan)
 }
+
+// login func
+
+func loginUserCameraDatabase(user register,errChan chan error){}

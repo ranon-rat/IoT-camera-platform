@@ -12,7 +12,7 @@ func setupRoutes() error{
 
 	r := mux.NewRouter()
 	r.HandleFunc("/register",registerUser)
-	
+	r.HandleFunc("/login",loginUser)
 	err:=http.ListenAndServe(":8080",r)
 	if err!=nil{
 		return err
