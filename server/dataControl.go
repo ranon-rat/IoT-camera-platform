@@ -153,4 +153,9 @@ func registerUserCameraDatabase(user register,errChan chan error) {
 
 // login func
 
-func loginUserCameraDatabase(user register,errChan chan error){}
+func loginUserCameraDatabase(user register,errChan chan error){
+	q:=`SELECT 
+	
+	`
+	log.Println(q)
+}
