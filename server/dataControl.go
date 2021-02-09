@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -129,6 +130,7 @@ func registerUserCameraDatabase(user register,errChan chan error) {
 		encryptData(user.IP), 
 		encryptData(user.Password), 
 		user.Username,
+		time.Now().UnixNano()/ int64(time.Hour),
 	)
 	if err != nil {
 		log.Println(err)
