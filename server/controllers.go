@@ -8,10 +8,12 @@ func registerUser(w http.ResponseWriter, r *http.Request){
 	
 	switch r.Method {
 	case "POST":
+	
 	var newUser register
 	json.NewDecoder(r.Body).Decode(&newUser)
-
+	newUser.IP=r.Header.Get("x-forwarded-for")
 	break
+
 	default :
 	
 	w.Write([]byte("you cant do that 😡"))

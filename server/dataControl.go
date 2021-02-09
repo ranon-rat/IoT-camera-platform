@@ -32,10 +32,10 @@ func getConnection() (*sql.DB,error){
 	}
 	return db,nil
 }
-func exist(user string,sizeChan chan int) error{
+func exist(user string,ip string,sizeChan chan int) error{
 	q:=`SELECT COUNT(*) 
 		FROM usercameras 
-		where username==? `
+		where username==? || ip ==? `
 	db,err:=getConnection()
 	if err!=nil{
 
@@ -49,7 +49,7 @@ func exist(user string,sizeChan chan int) error{
 		close(sizeChan)	
 		return err
 	}
-	HowMany,err:=stm.Query(user)
+	HowMany,err:=stm.Query(user,ip)
 	if err!=nil{
 		log.Println(err)
 		close(sizeChan)	
@@ -74,7 +74,7 @@ func exist(user string,sizeChan chan int) error{
 func uploadUserCameraDatabase(user register,errChan chan error) {
 	sizeChan:=make(chan int)
 	// we check if the username of the camera already exist
-	go exist(user.Username,sizeChan)
+	go exist(user.Username,user.IP,sizeChan)
 	if <-sizeChan>0{
 		errChan<- errors.New("sorry but that user has already registered")
 		return 
