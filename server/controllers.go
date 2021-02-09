@@ -5,15 +5,17 @@ import (
 	"net/http"
 )
 func registerUser(w http.ResponseWriter, r *http.Request){
-	var newUser register
+	
 	switch r.Method {
 	case "POST":
-		json.NewDecoder(r.Body).Decode(&newUser)
-		break
+	var newUser register
+	json.NewDecoder(r.Body).Decode(&newUser)
 
-		
+	break
 	default :
-		break;
+	
+	w.Write([]byte("you cant do that 😡"))
+	break
 	}
 	
 
