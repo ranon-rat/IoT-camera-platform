@@ -1,6 +1,6 @@
 CREATE TABLE usercameras(
     id INTEGER PRIMARY KEY,
-    ip VARCHAR(50),
+    ip VARCHAR(64),
     password TEXT NOTNULL,
     username TEXT NOTNULL,
     last_time_login INTEGER NOTNULL

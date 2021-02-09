@@ -1,13 +1,25 @@
 package main
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+func encryptData(data string) *string {
+
+   h := sha256.New()
+	h.Write([]byte(data))
+	v:=hex.EncodeToString(h.Sum(nil))
+	return  &v
+
+ 
+}
 
 // get a simple connection
 func getConnection() (*sql.DB,error){
@@ -84,7 +96,7 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 	|		name 		|        type		 |	
 	|-------------------|--------------------|
 	|id 				|INTEGER PRIMARY KEY |
-	|ip 				|VARCHAR(50) 		 |
+	|ip 				|VARCHAR(64) 		 |
 	|password			|TEXT 				 |
 	|username 			|TEXT 		 		 |
 	|last_time_login 	|INTEGER			 |
@@ -99,6 +111,7 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 
 	defer db.Close()
 	//we use stm to avoid attacks
+	
 	stm,err:=db.Prepare(q)
 	if err!=nil{
 		log.Println(err)
@@ -107,7 +120,11 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 	}
 	defer stm.Close()
 	//then we run the query
-	r, err := stm.Exec(&user.IP, &user.Password, &user.Username,)
+	r, err := stm.Exec(
+		encryptData(user.IP), 
+		encryptData(user.Password), 
+		encryptData(user.Username),
+	)
 	if err != nil {
 		log.Println(err)
 		errChan<-err
@@ -116,7 +133,11 @@ func uploadUserCameraDatabase(user register,errChan chan error) {
 	// if more than one file is affected we return an error
 	i, _ := r.RowsAffected()
 	if i != 1 {
-		errChan<- errors.New(fmt.Sprint("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s",q,user.IP,  user.Password,  user.Username))
+		errChan<- fmt.Errorf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s",q,
+			user.IP,  
+			user.Password, 
+			user.Username,
+		)
 		return
 	}
 	
