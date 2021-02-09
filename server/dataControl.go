@@ -20,40 +20,105 @@ func getConnection() (*sql.DB,error){
 	}
 	return db,nil
 }
-
-func uploadUserCameraDatabase(user register) error{
-	q:=`INSERT INTO 
-	usercameras(ip,password,username,last_time_login)
-	VALUES(?1,?2,?3,?4) `
-	/*
-	usercameras:
-	id INTEGER PRIMARY KEY,
-    ip VARCHAR(50),
-    password TEXT,
-    username TEXT,
-    last_time_login INTEGER
-	*/
+func exist(user string,sizeChan chan int) error{
+	q:=`SELECT COUNT(*) 
+		FROM usercameras 
+		where username==? `
 	db,err:=getConnection()
 	if err!=nil{
+
 		log.Println(err)
+		close(sizeChan)
 		return err
 	}
-	defer db.Close()
 	stm,err:=db.Prepare(q)
 	if err!=nil{
 		log.Println(err)
-		return  err
-	}
-	r, err := stm.Exec(&user.IP, &user.Password, &user.User,)
-	if err != nil {
-		log.Println(err)
+		close(sizeChan)	
 		return err
 	}
-	i, _ := r.RowsAffected()
-	if i != 1 {
-		return errors.New("se esperaba una sola fila omg")
+	HowMany,err:=stm.Query(user)
+	if err!=nil{
+		log.Println(err)
+		close(sizeChan)	
+		return err 
+	}
+	var size int
+	for HowMany.Next(){
+		err = HowMany.Scan(&size)
+		if err != nil {
+			close(sizeChan)
+			return err
+
+		}
+
+	}
+	sizeChan<-size
+
+	return nil
+
+}
+
+func uploadUserCameraDatabase(user register,errChan chan error) {
+	sizeChan:=make(chan int)
+	// we check if the username of the camera already exist
+	go exist(user.Username,sizeChan)
+	if <-sizeChan>0{
+		errChan<- errors.New("sorry but that user has already registered")
+		return 
+	}
+	// the query for insert the data
+	q:=`INSERT INTO 
+	usercameras(
+		ip,
+		password,
+		username,
+		last_time_login
+	)
+	VALUES(?1,?2,?3,?4) `
+	/*
+	this is how the table is
+	_________________________________________
+	|				usercameras				 |
+	|----------------------------------------|
+	|		name 		|        type		 |	
+	|-------------------|--------------------|
+	|id 				|INTEGER PRIMARY KEY |
+	|ip 				|VARCHAR(50) 		 |
+	|password			|TEXT 				 |
+	|username 			|TEXT 		 		 |
+	|last_time_login 	|INTEGER			 |
+	*/
+	// we get the connection
+	db,err:=getConnection()
+	if err!=nil{
+		log.Println(err)
+		errChan<-err
+		return
 	}
 
-	fmt.Println(q)
-	return nil
+	defer db.Close()
+	//we use stm to avoid attacks
+	stm,err:=db.Prepare(q)
+	if err!=nil{
+		log.Println(err)
+		errChan<-err
+		return  
+	}
+	defer stm.Close()
+	//then we run the query
+	r, err := stm.Exec(&user.IP, &user.Password, &user.Username,)
+	if err != nil {
+		log.Println(err)
+		errChan<-err
+		return
+	}
+	// if more than one file is affected we return an error
+	i, _ := r.RowsAffected()
+	if i != 1 {
+		errChan<- errors.New(fmt.Sprint("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s",q,user.IP,  user.Password,  user.Username))
+		return
+	}
+	
+	close(errChan)
 }
