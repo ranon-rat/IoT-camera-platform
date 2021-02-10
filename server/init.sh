@@ -1,0 +1,1 @@
+cat initDatabase.sql | sqlite3 iotcameradata.db
