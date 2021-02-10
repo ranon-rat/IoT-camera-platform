@@ -17,7 +17,7 @@ func encryptData(data string) *string {
 	v:=hex.EncodeToString(sum[:])
 	return  &v
 }
-
+// i need more comments for do something because i cant die aaa
 // get a simple connection
 func getConnection() (*sql.DB,error){
 
