@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"errors"
@@ -8,22 +9,13 @@ import (
 	"log"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func encryptData(data string) *string {
-
-    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(data), bcrypt.DefaultCost)// we encript the data
-	if err!=nil{
-		log.Println(err)
-		return nil
-	}
-	v:=hex.EncodeToString(hashedPassword)
+ 	sum := sha256.Sum256([]byte(data))// we encript the data
+	v:=hex.EncodeToString(sum[:])
 	return  &v
-
- 
 }
 
 // get a simple connection
