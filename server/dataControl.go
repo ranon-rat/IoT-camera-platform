@@ -40,36 +40,35 @@ func getConnection() (*sql.DB,error){
 func exist(user string,ip string,sizeChan chan int) error{
 	q:=`SELECT COUNT(*) 
 		FROM usercameras 
-		where username==? || ip ==? `
+		WHERE username=?1 OR ip =?2 ;`
+	var size int
+	// GET A CONNECTION	
 	db,err:=getConnection()
 	if err!=nil{
-
 		log.Println(err)
 		close(sizeChan)
 		return err
 	}
-	stm,err:=db.Prepare(q)
-	if err!=nil{
-		log.Println(err)
-		close(sizeChan)	
-		return err
-	}
-	HowMany,err:=stm.Query(user,ip)
+	HowMany,err:=db.Query(q,user,ip)
 	if err!=nil{
 		log.Println(err)
 		close(sizeChan)	
 		return err 
 	}
-	var size int
+	defer HowMany.Close()
+	
+	
 	for HowMany.Next(){
 		err = HowMany.Scan(&size)
 		if err != nil {
+			log.Println(err)
 			close(sizeChan)
 			return err
 
 		}
 
 	}
+	log.Println(size)
 	sizeChan<-size
 
 	return nil
@@ -79,10 +78,18 @@ func exist(user string,ip string,sizeChan chan int) error{
 func registerUserCameraDatabase(user register,errChan chan error) {
 	sizeChan:=make(chan int)
 	// we check if the username of the camera already exist
-	go exist(user.Username,user.IP,sizeChan)
+	go exist(user.Username,*encryptData(user.IP),sizeChan)
 	if <-sizeChan>0{
 		errChan<- errors.New("sorry but that user has already registered")
 		return 
+	}
+	if len(user.Username)==0 || len(user.Password)==0 {
+		errChan<-fmt.Errorf("some value is empty\nusername:%s\npassword%s",
+		user.Username,
+		user.Password,
+	)
+		return
+
 	}
 	// the query for insert the data
 	q:=`INSERT INTO 
@@ -152,10 +159,10 @@ func registerUserCameraDatabase(user register,errChan chan error) {
 }
 
 // login func
-
+/*
 func loginUserCameraDatabase(user register,errChan chan error){
 	q:=`SELECT 
 	
 	`
 	log.Println(q)
-}
+}*/

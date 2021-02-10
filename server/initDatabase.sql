@@ -1,10 +1,12 @@
 CREATE TABLE usercameras(
     id INTEGER PRIMARY KEY,
-    ip VARCHAR(120),
-    password TEXT NOTNULL,
-    username TEXT NOTNULL,
-    last_time_login INTEGER NOTNULL
+    ip TEXT NOT NULL,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    last_time_login INTEGER NOT NULL
 );
+-- if we need to add a new colum 
+-- ALTER TABLE <table> ADD <column> <type>;
 CREATE TABLE userclients(
     cookie TEXT
 );

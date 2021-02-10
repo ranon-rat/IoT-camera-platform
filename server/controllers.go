@@ -18,6 +18,7 @@ func registerUser(w http.ResponseWriter, r *http.Request){
 	go registerUserCameraDatabase(newUser,errChan)
 	if <-errChan!=nil{
 		log.Println(<-errChan)
+		return
 	}
 	break
 
