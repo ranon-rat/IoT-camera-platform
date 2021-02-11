@@ -151,10 +151,40 @@ func registerUserCameraDatabase(user register,errChan chan error) {
 }
 
 // login func
-/*
-func loginUserCameraDatabase(user register,errChan chan error){
-	q:=`SELECT 
+func loginUserCameraDatabase(user register,validChan chan bool){
+	q:=`SELECT COUNT(*) FROM usercameras  
+	WHERE username = ?1 AND password= ?2;`
+	// get the connection
+	db ,err:= getConnection()
+	if err!=nil{
+		log.Println(err)	
+		validChan<-false
+
+		return
+	}
+	defer db.Close()
+	// make the consult 
+	// encript the data 
+	valid,err:= db.Query(q, user.Username,
+		encryptData(user.Password))
+	// review the results
+	var i int
+	for valid.Next(){
+		// change the value of i
+		err=valid.Scan(&i)
+		if err!=nil{
+			log.Println(err)
+			validChan<-false
+			return
+		}
+	}
+	println(i)
+	validChan<- i>0
+	if <-validChan{
+		db.Exec(`UPDATE usercameras
+		SET last_time_login = ?1
+		WHERE username =?2;`,time.Now().UnixNano()/ int64(time.Hour),user.Username)
+	}
 	
-	`
-	log.Println(q)
-}*/
+
+}

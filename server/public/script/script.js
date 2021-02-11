@@ -1,0 +1,1 @@
+let socket = new WebSocket(`ws://${window.location.href+window.location.pathname}`)
