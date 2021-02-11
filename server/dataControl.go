@@ -180,11 +180,19 @@ func loginUserCameraDatabase(user register,validChan chan bool){
 	}
 	println(i)
 	validChan<- i>0
-	if <-validChan{
-		db.Exec(`UPDATE usercameras
+}
+func updateUsages(user register){
+	q:=`UPDATE usercameras
 		SET last_time_login = ?1
-		WHERE username =?2;`,time.Now().UnixNano()/ int64(time.Hour),user.Username)
+		WHERE username =?2;`
+	db,err:= getConnection()
+	if err!=nil{
+		log.Println(err)
+		return
 	}
-	
+	defer db.Close()
+	db.Exec(q,time.Now().UnixNano()/ int64(time.Hour),user.Username)
+
+
 
 }

@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 func registerUser(w http.ResponseWriter, r *http.Request){
 	
@@ -45,11 +46,14 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request){
 	// check if all is okay
 	go loginUserCameraDatabase(oldUser,valid)
 	if <-valid{
-		fmt.Println(oldUser.Username)
-		videoCamera[oldUser.Username]=defaultImage
+		go updateUsages(oldUser)
+		upgrade.CheckOrigin = func(r *http.Request) bool { return true }
+		ws, err := upgrade.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+		}
+		go controlData(ws)
 		
-		fmt.Println(videoCamera)
-		w.Write([]byte("you are already register"))
 		return
 	}
 	break
@@ -58,4 +62,19 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request){
 	break
 
 	}
+}
+
+func controlData(conn *websocket.Conn,user register){
+	videoCamera[user.Username]=defaultImage
+	/*for{
+		message,m,err:=conn.ReadMessage()
+		if err!=nil{
+			log.Println(err)
+			break
+		}
+		
+
+	}*/
+
+
 }

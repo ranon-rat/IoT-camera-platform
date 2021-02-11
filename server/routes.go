@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"net/http"
@@ -22,8 +21,6 @@ func setupRoutes() error{
 		if !err{
 			http.Error(w,"user not find",401)
 		}
-		
-		fmt.Println(videoCamera)
 		w.Write([]byte(videoCamera[user]))
 	})
 	err:=http.ListenAndServe(":8080",r)
