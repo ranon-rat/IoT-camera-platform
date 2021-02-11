@@ -1,10 +1,10 @@
-# [routes.go] (https://github.com/ranon-rat/IoT-camera-/blob/master/server/routes.go)
+# [routes.go](https://github.com/ranon-rat/IoT-camera-/blob/master/server/routes.go)
 ## what is it for?
 
 is to set the routes that the server will do, it only has a `setupRoutes ()` function which returns an error if something happens
 It is not very difficult and well, you just have to put it in the main
 
-# [types.go] (https://github.com/ranon-rat/IoT-camera-/blob/master/server/types.go)
+# [types.go](https://github.com/ranon-rat/IoT-camera-/blob/master/server/types.go)
 
 ## what is it for?
 It is only to put certain things and have a greater order in the structure of the project, there we put the types and other things as variables and constants and the only type that for now is the following
@@ -19,7 +19,7 @@ IP          string
 
 }
 ```
-# [controllers.go] (https://github.com/ranon-rat/IoT-camera-/blob/master/server/controllers.go)
+# [controllers.go](https://github.com/ranon-rat/IoT-camera-/blob/master/server/controllers.go)
 
 ## what is it for?
 
@@ -39,7 +39,7 @@ If you make a post request, you should execute the `loginUserCameraDatabase ()` 
 
 <!--------------------->
 
-# [dataControl.go] (https://github.com/ranon-rat/IoT-camera-/blob/master/server/dataControl.go)
+# [dataControl.go](https://github.com/ranon-rat/IoT-camera-/blob/master/server/dataControl.go)
 
 ## what is it for?
 
