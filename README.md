@@ -13,7 +13,7 @@ how its not finished for now you cant do so many things with it
 ### server 
 
 If you want to check the documentation here is it [docs](https://github.com/ranon-rat/IoT-camera-platform/blob/master/server/englishDoc.md)
-for now its not finished but if you want you can aport to the project.
+for now its not finished but if you want you can contribute to the project.
 
 ## Español
 
