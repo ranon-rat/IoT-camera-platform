@@ -52,7 +52,7 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request){
 		if err != nil {
 			log.Println(err)
 		}
-		go controlData(ws)
+		go controlData(ws,oldUser)
 		
 		return
 	}
@@ -75,6 +75,4 @@ func controlData(conn *websocket.Conn,user register){
 		
 
 	}*/
-
-
 }
