@@ -14,7 +14,8 @@ este se hizo para la base de datos
 type register struct{
 	Password 		string `json:"password"`
 	Username		string `json:"username"`
-	IP 				  string 
+	Image 			string `json:"image"`	
+	IP 				string 
 
 }
 ```
@@ -57,7 +58,7 @@ el query que ejecuta esta funcion es
 ```sql
 SELECT COUNT(*) 
 		FROM usercameras 
-		where username==? || ip ==? ;`
+		where username=? OR ip=? ;`
 ```
 y la funcion es 
 ```go
@@ -89,6 +90,44 @@ func registerUserCameraDatabase(user register,errChan chan error)
 esta hecha para las goroutines asi que se debe de poner lo tipico `go registerUserCameraDatabase(user,errChan)`
 y  con eso bastaria
 
+## loginUserCameraDatabase()
+
+### para que es ? 
+es una funcion que esta hecha  para hacer un login , ya funciona y es bastante buena
+
+### query
+el query que ejecuta esta funcion es  
+```sql
+SELECT COUNT(*) FROM usercameras  
+	WHERE username = ?1 AND password= ?2;
+```
+### cuerpo 
+
+el cuerpo de la funcion es este 
+```go
+func loginUserCameraDatabase(user register,validChan chan bool)
+```
+es recomendable que se use co `go loginUserCameraDatabase` para poder controlarlo ya que es una funcion que se hizo especificamente para loggearse de manera concurrente , te regresa un `true` si el valor del query es mayor a 1 
+## updateUsages()
+
+### para que es ? 
+esta funcion la hemos hecho por una simple razon… es para poder actualizar y saber cuando fue la ultima vez que envio una imagen , asi podemos evitarnos algunos problemas que suelen suceder 
+
+### Query 
+el query que ejecuta esta funcion es 
+```sql
+UPDATE usercameras
+		SET last_time_login = ?1
+		WHERE username =?2;`
+```
+
+## cuerpo 
+esta funcion esta hecha para funcionar en `goroutines`asi que es recomendable que lo usen de esa manera
+```go
+func updateUsages(user register)
+```
+
+
 <!--------------------->
 ## la estructura de la base de datos es la siguiente
 
@@ -97,7 +136,7 @@ y  con eso bastaria
 |		name            |        type        |	
 |-------------------|--------------------|
 |id                 |INTEGER PRIMARY KEY |
-|ip                 |VARCHAR(64)         |
+|ip                 |TEXT                |
 |password           |TEXT                |
 |username           |TEXT                |
 |last_time_login    |INTEGER             |
