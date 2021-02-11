@@ -5,7 +5,7 @@ import (
 	"log"
 )
 func main(){
-	fmt.Println("hello world")
+	fmt.Println("starting server")
 	log.Println(setupRoutes())
 
 }
