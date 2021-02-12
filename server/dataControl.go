@@ -52,10 +52,7 @@ func exist(user string, ip string, code chan codeHTTP, sizeChan chan int) {
 	}
 
 	sizeChan <- size
-	code <- codeHTTP{
-		Message: "all its okay",
-		Code:    0,
-	}
+	code <- codeHTTP{Message: "all okay", Code: 0}
 
 }
 
@@ -115,10 +112,7 @@ func registerUserCameraDatabase(user registerCamera, code chan codeHTTP) {
 		errorControl(errors.New("internal server error"), code, "intelan server error", 500)
 
 	}
-	code <- codeHTTP{
-		Message: "all okay",
-		Code:    0,
-	}
+	code <- codeHTTP{Message: "all okay", Code: 0}
 
 }
 
@@ -145,10 +139,7 @@ func loginUserCameraDatabase(user registerCamera, code chan codeHTTP, validChan 
 
 	}
 	validChan <- i > 0
-	code <- codeHTTP{
-		Message: "all okay",
-		Code:    0,
-	}
+	code <- codeHTTP{Message: "all okay", Code: 0}
 
 }
 
@@ -167,10 +158,7 @@ func generateToken(user registerCamera, code chan codeHTTP, tokenChan chan strin
 	stm, _ := db.Prepare(q)
 	stm.Exec(token, user.Username)
 	tokenChan <- (token) // and send the token
-	code <- codeHTTP{
-		Message: "all okay",
-		Code:    0,
-	}
+	code <- codeHTTP{Message: "all okay", Code: 0}
 }
 
 // we update the last time that he send somethings
