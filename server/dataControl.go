@@ -25,7 +25,7 @@ func getConnection() (*sql.DB, error) {
 func exist(user string, ip string, w http.ResponseWriter, sizeChan chan int) {
 	q := `SELECT COUNT(*) 
 		FROM usercameras 
-		WHERE username=?1 OR ip =?2 ;`
+		WHERE username=?1 OR ip =?2 ;` // igual aqui
 	var size int
 	// GET A CONNECTION
 	db, _ := getConnection()
@@ -112,7 +112,7 @@ func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
 // login func
 func loginUserCameraDatabase(user registerCamera, w http.ResponseWriter, validChan chan bool) {
 	q := `SELECT COUNT(*) FROM usercameras  
-	WHERE username = ?1 AND password= ?2;`
+	WHERE username = ?1 AND password= ?2;` // aqui no accedemos a la informacion , accedemos a la cantidad de usuarios que coinciden
 	// get the connection
 	db, _ := getConnection()
 
