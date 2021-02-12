@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 )
-func main(){
+
+func main() {
 	fmt.Println("starting server")
 	log.Println(setupRoutes())
 
