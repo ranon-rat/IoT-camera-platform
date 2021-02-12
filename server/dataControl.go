@@ -2,10 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
-	"net/http"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -22,7 +22,7 @@ func getConnection() (*sql.DB, error) {
 	}
 	return db, nil
 }
-func exist(user string, ip string, w http.ResponseWriter, sizeChan chan int) {
+func exist(user string, ip string, w chan codeHTTP, sizeChan chan int) {
 	q := `SELECT COUNT(*) 
 		FROM usercameras 
 		WHERE username=?1 OR ip =?2 ;` // igual aqui
@@ -34,7 +34,8 @@ func exist(user string, ip string, w http.ResponseWriter, sizeChan chan int) {
 	if err != nil {
 		log.Println(err)
 		close(sizeChan)
-		http.Error(w, "internal server error", 500)
+		errorControl(err, w, "internal server error", 500)
+
 	}
 	defer HowMany.Close()
 
@@ -42,8 +43,8 @@ func exist(user string, ip string, w http.ResponseWriter, sizeChan chan int) {
 		err = HowMany.Scan(&size)
 		if err != nil {
 			log.Println(err)
+			errorControl(err, w, "internal server error", 500)
 			close(sizeChan)
-			http.Error(w, "internal server error", 500)
 
 		}
 
@@ -54,16 +55,17 @@ func exist(user string, ip string, w http.ResponseWriter, sizeChan chan int) {
 }
 
 // register func
-func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
+func registerUserCameraDatabase(user registerCamera, code chan codeHTTP) {
 	sizeChan := make(chan int)
 	if len(user.Username) == 0 || len(user.Password) == 0 {
-		http.Error(w, "some value is empty", 406)
+		errorControl(errors.New("some value is empty"), code, "some value is empty", 500)
 		return
 	}
 	// we check if the username of the camera already exist
-	go exist(user.Username, *encryptData(user.IP), w, sizeChan)
+	go exist(user.Username, *encryptData(user.IP), code, sizeChan)
 	if <-sizeChan > 0 {
-		w.Write([]byte("sorry but that user has already registered"))
+		errorControl(errors.New("that user has been already registered"), code, "that user has been registered", 400)
+
 		return
 	}
 
@@ -78,13 +80,13 @@ func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
 	VALUES(?1,?2,?3,?4) `
 	// we get the connection
 	db, err := getConnection()
-	errorControl(err, w, "internal server error", 500) // manage the errors
+	errorControl(err, code, "internal server error", 500) // manage the errors
 
 	defer db.Close()
 	//we use stm to avoid attacks
 
 	stm, err := db.Prepare(q)
-	errorControl(err, w, "internal server error", 500) // manage the errors
+	errorControl(err, code, "internal server error", 500) // manage the errors
 
 	defer stm.Close()
 	//then we run the query
@@ -103,14 +105,15 @@ func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
 			*encryptData(user.Password),
 			user.Username,
 		)
-		http.Error(w, "internal server error", 500)
+		errorControl(errors.New("internal server error"), code, "intelan server error", 500)
+
 	}
-	w.Write([]byte("all its okay"))
+	errorControl(nil, code, "", 0)
 
 }
 
 // login func
-func loginUserCameraDatabase(user registerCamera, w http.ResponseWriter, validChan chan bool) {
+func loginUserCameraDatabase(user registerCamera, code chan codeHTTP, validChan chan bool) {
 	q := `SELECT COUNT(*) FROM usercameras  
 	WHERE username = ?1 AND password= ?2;` // aqui no accedemos a la informacion , accedemos a la cantidad de usuarios que coinciden
 	// get the connection
@@ -120,14 +123,14 @@ func loginUserCameraDatabase(user registerCamera, w http.ResponseWriter, validCh
 	// make the consult and encrypt the data
 	valid, err := db.Query(q, user.Username,
 		encryptData(user.Password))
-	errorControl(err, w, "internal server error", 500) // manage the errors
+	errorControl(err, code, "internal server error", 500) // manage the errors
 
 	// review the results
 	var i int
 	for valid.Next() {
 		// change the value of i
 		err = valid.Scan(&i)
-		errorControl(err, w, "internal server error", 500) // manage the errors
+		errorControl(err, code, "internal server error", 500) // manage the errors
 
 	}
 
@@ -136,11 +139,11 @@ func loginUserCameraDatabase(user registerCamera, w http.ResponseWriter, validCh
 }
 
 // we generate the token
-func generateToken(user registerCamera, w http.ResponseWriter, tokenChan chan string) {
+func generateToken(user registerCamera, code chan codeHTTP, tokenChan chan string) {
 	q := `UPDATE usercameras SET token = ?1 WHERE username = ?2;`
 	// we get a connection
 	db, err := getConnection()
-	errorControl(err, w, "internal server error", 500) // manage the errors
+	errorControl(err, code, "internal server error", 500) // manage the errors
 
 	// generate the token
 	token := *encryptData(fmt.Sprintf("%s%d", (*encryptData(user.Password) + *encryptData(user.Username)), rand.Int()))
@@ -153,13 +156,11 @@ func generateToken(user registerCamera, w http.ResponseWriter, tokenChan chan st
 }
 
 // we update the last time that he send somethings
-func updateUsages(user registerCamera, w http.ResponseWriter) {
+func updateUsages(user registerCamera, code chan codeHTTP) {
 	// the query
 	q := `UPDATE usercameras SET  last_time_login = ?1 WHERE username = ?2;`
-	db, err := getConnection()                         // get the connection
-	errorControl(err, w, "internal server error", 500) // manage the errors
-
+	db, err := getConnection()                            // get the connection
+	errorControl(err, code, "internal server error", 500) // manage the errors
 	defer db.Close()
 	db.Exec(q, time.Now().UnixNano()/int64(time.Hour), user.Username) // and exec the query
-
 }

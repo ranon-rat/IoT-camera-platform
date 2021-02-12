@@ -5,15 +5,21 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"log"
-	"net/http"
 )
 
 // manage the errors
-func errorControl(err error, w http.ResponseWriter, message string, code int) {
+func errorControl(err error, codeMessage chan codeHTTP, message string, code int) {
 	if err != nil {
 		log.Println(err)
-		http.Error(w, message, code)
-
+		codeMessage <- codeHTTP{
+			Message: message,
+			Code:    code,
+		}
+		return
+	}
+	codeMessage <- codeHTTP{
+		Message: "all its okay",
+		Code:    200,
 	}
 
 }

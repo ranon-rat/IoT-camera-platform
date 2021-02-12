@@ -11,6 +11,10 @@ var (
 	}
 )
 
+type codeHTTP struct {
+	Message string
+	Code    int
+}
 type registerCamera struct {
 	Password string `json:"password"`
 	Username string `json:"username"`
