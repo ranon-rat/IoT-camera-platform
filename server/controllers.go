@@ -13,11 +13,9 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		var newUser registerCamera
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
-		okChan := make(chan bool)
-		go registerUserCameraDatabase(newUser, w, okChan)
-		if <-okChan {
-			w.Write([]byte("all its okay"))
-		}
+
+		go registerUserCameraDatabase(newUser, w)
+
 		break
 
 	default:
@@ -42,9 +40,7 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 
 			go updateUsages(oldUser, w)         // we update the last time that he send something
 			go generateToken(oldUser, w, token) // generate the token
-			// and send the token
 			w.Write([]byte(<-token))
-
 			return
 		}
 		break
