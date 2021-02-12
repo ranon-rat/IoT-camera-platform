@@ -47,13 +47,13 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 		go loginUserCameraDatabase(oldUser, w, valid)
 		if <-valid {
 			go updateUsages(oldUser, w)
-			upgrade.CheckOrigin = func(r *http.Request) bool { return true }
+			/*upgrade.CheckOrigin = func(r *http.Request) bool { return true }
 			ws, err := upgrade.Upgrade(w, r, nil)
 			if err != nil {
 				log.Println(err)
 			}
 			go controlData(ws, oldUser)
-
+			*/
 			return
 		}
 		break
