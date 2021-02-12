@@ -178,43 +178,41 @@ func loginUserCameraDatabase(user registerCamera, w http.ResponseWriter, validCh
 			return
 		}
 	}
-	println(i)
+
 	validChan <- i > 0
 
 }
 
 // we generate the token
-func generateToken(user registerCamera, w http.ResponseWriter, token chan string) {
-	q := `UPDATE usercameras
-		SET token =?1
-		WHERE username=?2	
-		`
+func generateToken(user registerCamera, w http.ResponseWriter, tokenChan chan string) {
+	q := ` UPDATE usercameras SET token = ?1 WHERE username = ?1;`
 	// we get a connection
 	db, err := getConnection()
 	if err != nil {
-		close(token)
+		close(tokenChan)
 		log.Println(err)
 		http.Error(w, "internal error server", 500)
 		return
 	}
-	defer db.Close()
-	token <- *encryptData(fmt.Sprintf("%s%d", (*encryptData(user.Password) +
+
+	token := *encryptData(fmt.Sprintf("%s%d", (*encryptData(user.Password) +
 		*encryptData(user.Username)),
 		rand.Int(),
 	))
-	_, err = db.Exec(q, <-token, user.Username)
+	defer db.Close()
+
+	_, err = db.Exec(q, token, user.Username)
 	if err != nil {
 		log.Println(err)
 	}
+	tokenChan <- *token
 	// prepare the database with a stm
 
 }
 
 // we update the last time that he send somethings
 func updateUsages(user registerCamera, w http.ResponseWriter) {
-	q := `UPDATE usercameras
-		SET last_time_login = ?1
-		WHERE username =?2;`
+	q := `UPDATE usercameras SET  last_time_login = ?1 WHERE username = ?2;`
 	db, err := getConnection()
 	if err != nil {
 		log.Println(err)

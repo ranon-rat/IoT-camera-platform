@@ -34,16 +34,19 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
+		// we setup the values from the struct registerCamera
 		var oldUser registerCamera
 		json.NewDecoder(r.Body).Decode(&oldUser)
 		oldUser.IP = r.Header.Get("x-forwarded-for")
+		//  we use this for asynchronous communication
 		valid, token := make(chan bool), make(chan string)
 		// check if all is okay
 		go loginUserCameraDatabase(oldUser, w, valid)
 		if <-valid {
-			go generateToken(oldUser, w, token) // generate the token
-			go updateUsages(oldUser, w)         // we update the last time that he send something
 
+			go updateUsages(oldUser, w)         // we update the last time that he send something
+			go generateToken(oldUser, w, token) // generate the token
+			// and send the token
 			w.Write([]byte(<-token))
 
 			return
