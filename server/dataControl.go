@@ -156,7 +156,7 @@ func generateToken(user registerCamera, code chan codeHTTP, tokenChan chan strin
 	defer db.Close()
 	// prepare the sentence
 	stm, _ := db.Prepare(q)
-	stm.Exec(token, user.Username)
+	stm.Exec(encryptData(token), user.Username)
 	tokenChan <- (token) // and send the token
 	code <- codeHTTP{Message: "all okay", Code: 0}
 }
