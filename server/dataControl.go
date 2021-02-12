@@ -185,7 +185,7 @@ func loginUserCameraDatabase(user registerCamera, w http.ResponseWriter, validCh
 
 // we generate the token
 func generateToken(user registerCamera, w http.ResponseWriter, tokenChan chan string) {
-	q := ` UPDATE usercameras SET token = ?1 WHERE username = ?1;`
+	q := `UPDATE usercameras SET token = ?1 WHERE username = ?2;`
 	// we get a connection
 	db, err := getConnection()
 	if err != nil {
@@ -200,12 +200,20 @@ func generateToken(user registerCamera, w http.ResponseWriter, tokenChan chan st
 		rand.Int(),
 	))
 	defer db.Close()
-
-	_, err = db.Exec(q, token, user.Username)
+	stm, err := db.Prepare(q)
 	if err != nil {
 		log.Println(err)
+		close(tokenChan)
+		return
 	}
-	tokenChan <- *token
+	_, err = stm.Exec(token, user.Username)
+	if err != nil {
+		log.Println(err)
+		close(tokenChan)
+		return
+	}
+
+	tokenChan <- token
 	// prepare the database with a stm
 
 }
