@@ -18,7 +18,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		newUser.IP = r.Header.Get("x-forwarded-for")
 		errChan := make(chan error)
 
-		go registerUserCameraDatabase(newUser, errChan)
+		go registerUserCameraDatabase(newUser, w)
 		if <-errChan != nil {
 			log.Println(<-errChan)
 			err := <-errChan
@@ -44,9 +44,9 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 		oldUser.IP = r.Header.Get("x-forwarded-for")
 		valid := make(chan bool)
 		// check if all is okay
-		go loginUserCameraDatabase(oldUser, valid)
+		go loginUserCameraDatabase(oldUser, w, valid)
 		if <-valid {
-			go updateUsages(oldUser)
+			go updateUsages(oldUser, w)
 			upgrade.CheckOrigin = func(r *http.Request) bool { return true }
 			ws, err := upgrade.Upgrade(w, r, nil)
 			if err != nil {

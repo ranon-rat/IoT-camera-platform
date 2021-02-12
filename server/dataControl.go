@@ -4,9 +4,9 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -68,19 +68,16 @@ func exist(user string, ip string, sizeChan chan int) error {
 }
 
 // register func
-func registerUserCameraDatabase(user register, errChan chan error) {
+func registerUserCameraDatabase(user register, w http.ResponseWriter) {
 	sizeChan := make(chan int)
 	// we check if the username of the camera already exist
 	go exist(user.Username, *encryptData(user.IP), sizeChan)
 	if <-sizeChan > 0 {
-		errChan <- errors.New("sorry but that user has already registered")
+		http.Error(w, ("sorry but that user has already registered"), 406)
 		return
 	}
 	if len(user.Username) == 0 || len(user.Password) == 0 {
-		errChan <- fmt.Errorf("some value is empty\nusername:%s\npassword%s",
-			user.Username,
-			user.Password,
-		)
+		http.Error(w, "some value is empty", 406)
 		return
 
 	}
@@ -111,7 +108,7 @@ func registerUserCameraDatabase(user register, errChan chan error) {
 	db, err := getConnection()
 	if err != nil {
 		log.Println(err)
-		errChan <- err
+		http.Error(w, "internal server error", 500)
 		return
 	}
 
@@ -121,7 +118,7 @@ func registerUserCameraDatabase(user register, errChan chan error) {
 	stm, err := db.Prepare(q)
 	if err != nil {
 		log.Println(err)
-		errChan <- err
+		http.Error(w, "internal server error", 500)
 		return
 	}
 	defer stm.Close()
@@ -134,13 +131,13 @@ func registerUserCameraDatabase(user register, errChan chan error) {
 	)
 	if err != nil {
 		log.Println(err)
-		errChan <- err
+		http.Error(w, "internal server error", 500)
 		return
 	}
 	// if more than one file is affected we return an error
 	i, _ := r.RowsAffected()
 	if i != 1 {
-		errChan <- fmt.Errorf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q,
+		log.Printf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q,
 			*encryptData(user.IP),
 			*encryptData(user.Password),
 			user.Username,
@@ -148,17 +145,17 @@ func registerUserCameraDatabase(user register, errChan chan error) {
 		return
 	}
 
-	close(errChan)
 }
 
 // login func
-func loginUserCameraDatabase(user register, validChan chan bool) {
+func loginUserCameraDatabase(user register, w http.ResponseWriter, validChan chan bool) {
 	q := `SELECT COUNT(*) FROM usercameras  
 	WHERE username = ?1 AND password= ?2;`
 	// get the connection
 	db, err := getConnection()
 	if err != nil {
 		log.Println(err)
+		http.Error(w, "internal server error", 500)
 		validChan <- false
 
 		return
@@ -175,6 +172,7 @@ func loginUserCameraDatabase(user register, validChan chan bool) {
 		err = valid.Scan(&i)
 		if err != nil {
 			log.Println(err)
+			http.Error(w, "internal server error", 500)
 			validChan <- false
 			return
 		}
@@ -183,13 +181,14 @@ func loginUserCameraDatabase(user register, validChan chan bool) {
 	validChan <- i > 0
 
 }
-func updateUsages(user register) {
+func updateUsages(user register, w http.ResponseWriter) {
 	q := `UPDATE usercameras
 		SET last_time_login = ?1
 		WHERE username =?2;`
 	db, err := getConnection()
 	if err != nil {
 		log.Println(err)
+		http.Error(w, "internal server error", 500)
 		return
 	}
 	defer db.Close()
