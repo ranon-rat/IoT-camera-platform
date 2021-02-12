@@ -1,3 +1,3 @@
 
 m=`find . -name  '*.go'`
-go run $m
+go run $m 

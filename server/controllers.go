@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 )
 
@@ -14,14 +13,10 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		var newUser registerCamera
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
-		errChan := make(chan error)
-
-		go registerUserCameraDatabase(newUser, w)
-		if <-errChan != nil {
-			log.Println(<-errChan)
-			err := <-errChan
-			w.Write([]byte(err.Error()))
-			return
+		okChan := make(chan bool)
+		go registerUserCameraDatabase(newUser, w, okChan)
+		if <-okChan {
+			w.Write([]byte("all its okay"))
 		}
 		break
 
@@ -41,6 +36,7 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 		//  we use this for asynchronous communication
 		valid, token := make(chan bool), make(chan string)
 		// check if all is okay
+
 		go loginUserCameraDatabase(oldUser, w, valid)
 		if <-valid {
 

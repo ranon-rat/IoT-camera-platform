@@ -1,1 +1,1 @@
-cat initDatabase.sql | sqlite3 iotcameradata.db
+cat database/initDatabase.sql | sqlite3 database/iotcameradata.db

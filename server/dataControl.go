@@ -23,7 +23,7 @@ func encryptData(data string) *string {
 // get a simple connection
 func getConnection() (*sql.DB, error) {
 
-	db, err := sql.Open("sqlite3", "./iotcameradata.db")
+	db, err := sql.Open("sqlite3", "./database/iotcameradata.db")
 
 	if err != nil {
 		fmt.Println(err)
@@ -61,7 +61,7 @@ func exist(user string, ip string, sizeChan chan int) error {
 		}
 
 	}
-	log.Println(size)
+
 	sizeChan <- size
 
 	return nil
@@ -69,15 +69,17 @@ func exist(user string, ip string, sizeChan chan int) error {
 }
 
 // register func
-func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
+func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter, okChan chan bool) {
 	sizeChan := make(chan int)
 	// we check if the username of the camera already exist
 	go exist(user.Username, *encryptData(user.IP), sizeChan)
 	if <-sizeChan > 0 {
-		http.Error(w, ("sorry but that user has already registered"), 406)
+		close(okChan)
+		http.Error(w, "sorry but that user has already registered", 406)
 		return
 	}
 	if len(user.Username) == 0 || len(user.Password) == 0 {
+		close(okChan)
 		http.Error(w, "some value is empty", 406)
 		return
 
@@ -109,6 +111,7 @@ func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
 	db, err := getConnection()
 	if err != nil {
 		log.Println(err)
+		close(okChan)
 		http.Error(w, "internal server error", 500)
 		return
 	}
@@ -119,6 +122,7 @@ func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
 	stm, err := db.Prepare(q)
 	if err != nil {
 		log.Println(err)
+		close(okChan)
 		http.Error(w, "internal server error", 500)
 		return
 	}
@@ -132,19 +136,23 @@ func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
 	)
 	if err != nil {
 		log.Println(err)
+		close(okChan)
 		http.Error(w, "internal server error", 500)
 		return
 	}
 	// if more than one file is affected we return an error
 	i, _ := r.RowsAffected()
 	if i != 1 {
+		close(okChan)
 		log.Printf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q,
 			*encryptData(user.IP),
 			*encryptData(user.Password),
 			user.Username,
 		)
+
 		return
 	}
+	okChan <- true
 
 }
 
