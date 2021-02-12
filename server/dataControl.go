@@ -141,8 +141,8 @@ func registerUserCameraDatabase(user register, errChan chan error) {
 	i, _ := r.RowsAffected()
 	if i != 1 {
 		errChan <- fmt.Errorf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q,
-			user.IP,
-			user.Password,
+			*encryptData(user.IP),
+			*encryptData(user.Password),
 			user.Username,
 		)
 		return
