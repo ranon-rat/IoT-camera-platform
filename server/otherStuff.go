@@ -15,11 +15,8 @@ func errorControl(err error, codeMessage chan codeHTTP, message string, code int
 			Message: message,
 			Code:    code,
 		}
+
 		return
-	}
-	codeMessage <- codeHTTP{
-		Message: "all its okay",
-		Code:    200,
 	}
 
 }

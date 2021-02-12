@@ -22,7 +22,8 @@ func getConnection() (*sql.DB, error) {
 	}
 	return db, nil
 }
-func exist(user string, ip string, w chan codeHTTP, sizeChan chan int) {
+func exist(user string, ip string, code chan codeHTTP, sizeChan chan int) {
+
 	q := `SELECT COUNT(*) 
 		FROM usercameras 
 		WHERE username=?1 OR ip =?2 ;` // igual aqui
@@ -33,8 +34,8 @@ func exist(user string, ip string, w chan codeHTTP, sizeChan chan int) {
 	HowMany, err := db.Query(q, user, ip)
 	if err != nil {
 		log.Println(err)
-		close(sizeChan)
-		errorControl(err, w, "internal server error", 500)
+
+		errorControl(err, code, "internal server error", 500)
 
 	}
 	defer HowMany.Close()
@@ -43,19 +44,24 @@ func exist(user string, ip string, w chan codeHTTP, sizeChan chan int) {
 		err = HowMany.Scan(&size)
 		if err != nil {
 			log.Println(err)
-			errorControl(err, w, "internal server error", 500)
-			close(sizeChan)
+
+			errorControl(err, code, "internal server error", 500)
 
 		}
 
 	}
 
 	sizeChan <- size
+	code <- codeHTTP{
+		Message: "all its okay",
+		Code:    0,
+	}
 
 }
 
 // register func
 func registerUserCameraDatabase(user registerCamera, code chan codeHTTP) {
+
 	sizeChan := make(chan int)
 	if len(user.Username) == 0 || len(user.Password) == 0 {
 		errorControl(errors.New("some value is empty"), code, "some value is empty", 500)
@@ -63,6 +69,7 @@ func registerUserCameraDatabase(user registerCamera, code chan codeHTTP) {
 	}
 	// we check if the username of the camera already exist
 	go exist(user.Username, *encryptData(user.IP), code, sizeChan)
+
 	if <-sizeChan > 0 {
 		errorControl(errors.New("that user has been already registered"), code, "that user has been registered", 400)
 
@@ -108,12 +115,16 @@ func registerUserCameraDatabase(user registerCamera, code chan codeHTTP) {
 		errorControl(errors.New("internal server error"), code, "intelan server error", 500)
 
 	}
-	errorControl(nil, code, "", 0)
+	code <- codeHTTP{
+		Message: "all okay",
+		Code:    0,
+	}
 
 }
 
 // login func
 func loginUserCameraDatabase(user registerCamera, code chan codeHTTP, validChan chan bool) {
+
 	q := `SELECT COUNT(*) FROM usercameras  
 	WHERE username = ?1 AND password= ?2;` // aqui no accedemos a la informacion , accedemos a la cantidad de usuarios que coinciden
 	// get the connection
@@ -133,13 +144,17 @@ func loginUserCameraDatabase(user registerCamera, code chan codeHTTP, validChan 
 		errorControl(err, code, "internal server error", 500) // manage the errors
 
 	}
-
 	validChan <- i > 0
+	code <- codeHTTP{
+		Message: "all okay",
+		Code:    0,
+	}
 
 }
 
 // we generate the token
 func generateToken(user registerCamera, code chan codeHTTP, tokenChan chan string) {
+
 	q := `UPDATE usercameras SET token = ?1 WHERE username = ?2;`
 	// we get a connection
 	db, err := getConnection()
@@ -152,15 +167,23 @@ func generateToken(user registerCamera, code chan codeHTTP, tokenChan chan strin
 	stm, _ := db.Prepare(q)
 	stm.Exec(token, user.Username)
 	tokenChan <- (token) // and send the token
-
+	code <- codeHTTP{
+		Message: "all okay",
+		Code:    0,
+	}
 }
 
 // we update the last time that he send somethings
 func updateUsages(user registerCamera, code chan codeHTTP) {
 	// the query
+
 	q := `UPDATE usercameras SET  last_time_login = ?1 WHERE username = ?2;`
 	db, err := getConnection()                            // get the connection
 	errorControl(err, code, "internal server error", 500) // manage the errors
 	defer db.Close()
 	db.Exec(q, time.Now().UnixNano()/int64(time.Hour), user.Username) // and exec the query
+	code <- codeHTTP{
+		Message: "all okay",
+		Code:    0,
+	}
 }

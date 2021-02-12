@@ -39,17 +39,17 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 		// check if all is okay
 
 		go loginUserCameraDatabase(oldUser, codeMessage, valid)
-		c := <-codeMessage
 
 		if <-valid {
 
 			go updateUsages(oldUser, codeMessage)         // we update the last time that he send something
 			go generateToken(oldUser, codeMessage, token) // generate the token
 			w.Write([]byte(<-token))
-			return
-		}
-		w.Write([]byte(fmt.Sprintf("%s %d", c.Message, c.Code)))
 
+		} else {
+			c := <-codeMessage
+			w.Write([]byte(fmt.Sprintf("%s %d", c.Message, c.Code)))
+		}
 		break
 	default:
 		http.Error(w, "you cant do that 😡", 405)
