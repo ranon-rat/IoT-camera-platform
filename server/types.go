@@ -11,9 +11,12 @@ var (
 	}
 )
 
-type register struct {
+type registerCamera struct {
 	Password string `json:"password"`
 	Username string `json:"username"`
-	Image    string `json:"image"`
 	IP       string
+}
+type streamCamera struct {
+	Image string `json:"image"`
+	Token string `json:"token"`
 }

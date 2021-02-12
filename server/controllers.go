@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/websocket"
 )
 
 func registerUser(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +11,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 
-		var newUser register
+		var newUser registerCamera
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
 		errChan := make(chan error)
@@ -28,10 +26,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		break
 
 	default:
-		/*
-
-		 */
-		w.Write([]byte("you cant do that 😡"))
+		http.Error(w, "you cant do that 😡", 405)
 		break
 	}
 }
@@ -39,34 +34,32 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		var oldUser register
+		var oldUser registerCamera
 		json.NewDecoder(r.Body).Decode(&oldUser)
 		oldUser.IP = r.Header.Get("x-forwarded-for")
-		valid := make(chan bool)
+		valid, token := make(chan bool), make(chan string)
 		// check if all is okay
 		go loginUserCameraDatabase(oldUser, w, valid)
 		if <-valid {
-			go updateUsages(oldUser, w)
-			/*upgrade.CheckOrigin = func(r *http.Request) bool { return true }
-			ws, err := upgrade.Upgrade(w, r, nil)
-			if err != nil {
-				log.Println(err)
-			}
-			go controlData(ws, oldUser)
-			*/
+			go generateToken(oldUser, w, token) // generate the token
+			go updateUsages(oldUser, w)         // we update the last time that he send something
+
+			w.Write([]byte(<-token))
+
 			return
 		}
 		break
 	default:
-		w.Write([]byte("you cant do that 😡"))
+		http.Error(w, "you cant do that 😡", 405)
 		break
 
 	}
 }
 
-func controlData(conn *websocket.Conn, user register) {
+/*
+func controlData(conn *websocket.Conn, user registerCamera) {
 	videoCamera[user.Username] = defaultImage
-	/*for{
+	for{
 		message,m,err:=conn.ReadMessage()
 		if err!=nil{
 			log.Println(err)
@@ -74,5 +67,6 @@ func controlData(conn *websocket.Conn, user register) {
 		}
 
 
-	}*/
+	}
 }
+*/

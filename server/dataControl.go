@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -68,7 +69,7 @@ func exist(user string, ip string, sizeChan chan int) error {
 }
 
 // register func
-func registerUserCameraDatabase(user register, w http.ResponseWriter) {
+func registerUserCameraDatabase(user registerCamera, w http.ResponseWriter) {
 	sizeChan := make(chan int)
 	// we check if the username of the camera already exist
 	go exist(user.Username, *encryptData(user.IP), sizeChan)
@@ -148,7 +149,7 @@ func registerUserCameraDatabase(user register, w http.ResponseWriter) {
 }
 
 // login func
-func loginUserCameraDatabase(user register, w http.ResponseWriter, validChan chan bool) {
+func loginUserCameraDatabase(user registerCamera, w http.ResponseWriter, validChan chan bool) {
 	q := `SELECT COUNT(*) FROM usercameras  
 	WHERE username = ?1 AND password= ?2;`
 	// get the connection
@@ -181,7 +182,36 @@ func loginUserCameraDatabase(user register, w http.ResponseWriter, validChan cha
 	validChan <- i > 0
 
 }
-func updateUsages(user register, w http.ResponseWriter) {
+
+// we generate the token
+func generateToken(user registerCamera, w http.ResponseWriter, token chan string) {
+	q := `UPDATE usercameras
+		SET token =?1
+		WHERE username=?2	
+		`
+	// we get a connection
+	db, err := getConnection()
+	if err != nil {
+		close(token)
+		log.Println(err)
+		http.Error(w, "internal error server", 500)
+		return
+	}
+	defer db.Close()
+	token <- *encryptData(fmt.Sprintf("%s%d", (*encryptData(user.Password) +
+		*encryptData(user.Username)),
+		rand.Int(),
+	))
+	_, err = db.Exec(q, <-token, user.Username)
+	if err != nil {
+		log.Println(err)
+	}
+	// prepare the database with a stm
+
+}
+
+// we update the last time that he send somethings
+func updateUsages(user registerCamera, w http.ResponseWriter) {
 	q := `UPDATE usercameras
 		SET last_time_login = ?1
 		WHERE username =?2;`
