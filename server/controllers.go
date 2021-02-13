@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -14,10 +13,15 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		var newUser registerCamera
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
-		mes := make(chan codeHTTP)
-		go registerUserCameraDatabase(newUser, mes)
-		c := <-mes
-		w.Write([]byte(fmt.Sprintf("%s %d", c.Message, c.Code)))
+		errChan := make(chan bool)
+		go registerUserCameraDatabase(newUser, errChan)
+
+		if <-errChan {
+
+			http.Error(w, "something is bad , try again in other moment", 502)
+			return
+		}
+		w.Write([]byte("now you are registered "))
 
 		break
 
@@ -35,21 +39,25 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&oldUser)
 		oldUser.IP = r.Header.Get("x-forwarded-for")
 		//  we use this for asynchronous communication
-		codeMessage, valid, token := make(chan codeHTTP), make(chan bool), make(chan string)
+		errChan, valid, token := make(chan bool), make(chan bool), make(chan string)
 		// check if all is okay
 
-		go loginUserCameraDatabase(oldUser, codeMessage, valid)
+		go loginUserCameraDatabase(oldUser, valid)
 
 		if <-valid {
-
-			go updateUsages(oldUser, codeMessage)         // we update the last time that he send something
-			go generateToken(oldUser, codeMessage, token) // generate the token
+			go updateUsages(oldUser, errChan) // we update the last time that he send something
+			go generateToken(oldUser, token, errChan)
+			if !<-errChan {
+				http.Error(w, "something is bad,try again in other moment ", 502)
+				return
+			}
 			w.Write([]byte(<-token))
 
-		} else {
-			c := <-codeMessage
-			w.Write([]byte(fmt.Sprintf("%s %d", c.Message, c.Code)))
+			return
 		}
+		http.Error(w, "something is wrong , verify your password, or user\n ", 502)
+		// generate the token
+
 		break
 	default:
 		http.Error(w, "you cant do that 😡", 405)

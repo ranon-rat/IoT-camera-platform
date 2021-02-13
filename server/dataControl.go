@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -22,7 +21,7 @@ func getConnection() (*sql.DB, error) {
 	}
 	return db, nil
 }
-func exist(user string, ip string, code chan codeHTTP, sizeChan chan int) {
+func exist(user string, ip string, sizeChan chan int, okay chan bool) {
 
 	q := `SELECT COUNT(*) 
 		FROM usercameras 
@@ -35,62 +34,79 @@ func exist(user string, ip string, code chan codeHTTP, sizeChan chan int) {
 	if err != nil {
 		log.Println(err)
 
-		errorControl(err, code, "internal server error", 500)
+		if err != nil {
+			log.Println(err)
+			close(sizeChan)
+			okay <- false
+			return // manage the errors
+		}
 
 	}
+
 	defer HowMany.Close()
 
 	for HowMany.Next() {
 		err = HowMany.Scan(&size)
 		if err != nil {
 			log.Println(err)
-
-			errorControl(err, code, "internal server error", 500)
+			if err != nil {
+				log.Println(err)
+				close(sizeChan)
+				okay <- false
+				return // manage the errors
+			}
 
 		}
 
 	}
-
+	okay <- true
 	sizeChan <- size
-	code <- codeHTTP{Message: "all okay", Code: 0}
 
 }
 
 // register func
-func registerUserCameraDatabase(user registerCamera, code chan codeHTTP) {
+func registerUserCameraDatabase(user registerCamera, okay chan bool) {
 
-	sizeChan := make(chan int)
+	sizeChan := make(chan int, 1)
+	// creo que esto deberia de marcarnos si sizeChan esta cerrado o no
+	// asi creo que PODRIAMOS manejar  los errores
+
 	if len(user.Username) == 0 || len(user.Password) == 0 {
-		errorControl(errors.New("some value is empty"), code, "some value is empty", 500)
+		okay <- false
 		return
 	}
 	// we check if the username of the camera already exist
-	go exist(user.Username, *encryptData(user.IP), code, sizeChan)
+	go exist(user.Username, *encryptData(user.IP), sizeChan, okay)
 
 	if <-sizeChan > 0 {
-		errorControl(errors.New("that user has been already registered"), code, "that user has been registered", 400)
-
-		return
+		okay <- false
+		return // manage the errors
 	}
 
 	// the query for insert the data
-	q := `INSERT INTO 
-	usercameras(
-		ip,
-		password,
-		username,
-		last_time_login
-	)
-	VALUES(?1,?2,?3,?4) `
+	q := `
+	BEGIN TRANSACTION;
+		INSERT INTO 
+			usercameras(ip,password,username,last_time_login)
+			VALUES(?1,?2,?3,?4) 
+	END TRANSACTION;`
 	// we get the connection
 	db, err := getConnection()
-	errorControl(err, code, "internal server error", 500) // manage the errors
+	if err != nil {
+		log.Println(err)
+		okay <- false
+		return // manage the errors
+	} // manage the errors
 
 	defer db.Close()
 	//we use stm to avoid attacks
 
 	stm, err := db.Prepare(q)
-	errorControl(err, code, "internal server error", 500) // manage the errors
+	if err != nil {
+		log.Println(err)
+		okay <- false
+		return // manage the errors
+	} // manage the errors
 
 	defer stm.Close()
 	//then we run the query
@@ -103,21 +119,19 @@ func registerUserCameraDatabase(user registerCamera, code chan codeHTTP) {
 	// if more than one file is affected we return an error
 	i, _ := r.RowsAffected()
 	if i > 1 {
-
-		log.Printf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q,
-			*encryptData(user.IP),
-			*encryptData(user.Password),
-			user.Username,
-		)
-		errorControl(errors.New("internal server error"), code, "intelan server error", 500)
-
+		log.Printf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q, *encryptData(user.IP), *encryptData(user.Password), user.Username)
+		if err != nil {
+			okay <- false
+			log.Println(err)
+			return // manage the errors
+		}
 	}
-	code <- codeHTTP{Message: "all okay", Code: 0}
+	okay <- true
 
 }
 
 // login func
-func loginUserCameraDatabase(user registerCamera, code chan codeHTTP, validChan chan bool) {
+func loginUserCameraDatabase(user registerCamera, validChan chan bool) {
 
 	q := `SELECT COUNT(*) FROM usercameras  
 	WHERE username = ?1 AND password= ?2;` // aqui no accedemos a la informacion , accedemos a la cantidad de usuarios que coinciden
@@ -128,29 +142,45 @@ func loginUserCameraDatabase(user registerCamera, code chan codeHTTP, validChan 
 	// make the consult and encrypt the data
 	valid, err := db.Query(q, user.Username,
 		encryptData(user.Password))
-	errorControl(err, code, "internal server error", 500) // manage the errors
+	if err != nil {
+		log.Println(err)
+		validChan <- false
+		return // manage the errors
+	} // manage the errors
 
 	// review the results
 	var i int
 	for valid.Next() {
 		// change the value of i
 		err = valid.Scan(&i)
-		errorControl(err, code, "internal server error", 500) // manage the errors
 
+		if err != nil {
+			log.Println(err)
+			validChan <- false
+			return // manage the errors
+		} // manage the errors
 	}
 	validChan <- i > 0
-	code <- codeHTTP{Message: "all okay", Code: 0}
 
 }
 
 // we generate the token
-func generateToken(user registerCamera, code chan codeHTTP, tokenChan chan string) {
+func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 
-	q := `UPDATE usercameras SET token = ?1 WHERE username = ?2;`
+	q := `
+	BEGIN TRANSACTION;
+		UPDATE usercameras 
+			SET token = ?1 
+			WHERE username = ?2;
+	END TRANSACTION;`
 	// we get a connection
 	db, err := getConnection()
-	errorControl(err, code, "internal server error", 500) // manage the errors
-
+	if err != nil {
+		log.Println(err)
+		close(tokenChan)
+		okay <- false
+		return // manage the errors
+	}
 	// generate the token
 	token := *encryptData(fmt.Sprintf("%s%d", (*encryptData(user.Password) + *encryptData(user.Username)), rand.Int()))
 	defer db.Close()
@@ -158,20 +188,27 @@ func generateToken(user registerCamera, code chan codeHTTP, tokenChan chan strin
 	stm, _ := db.Prepare(q)
 	stm.Exec(encryptData(token), user.Username)
 	tokenChan <- (token) // and send the token
-	code <- codeHTTP{Message: "all okay", Code: 0}
+	okay <- true
+
 }
 
 // we update the last time that he send somethings
-func updateUsages(user registerCamera, code chan codeHTTP) {
+func updateUsages(user registerCamera, okay chan bool) {
 	// the query
-
-	q := `UPDATE usercameras SET  last_time_login = ?1 WHERE username = ?2;`
-	db, err := getConnection()                            // get the connection
-	errorControl(err, code, "internal server error", 500) // manage the errors
+	q := `BEGIN TRANSACTION;
+			UPDATE usercameras 
+				SET  last_time_login = ?1 
+				WHERE username = ?2;
+		END TRANSACTION;`
+	db, err := getConnection() // get the connection
+	if err != nil {
+		log.Println(err)
+		okay <- false
+		return // manage the errors
+	} // manage the errors
 	defer db.Close()
-	db.Exec(q, time.Now().UnixNano()/int64(time.Hour), user.Username) // and exec the query
-	code <- codeHTTP{
-		Message: "all okay",
-		Code:    0,
-	}
+	db.Exec(q, time.Now().UnixNano()/int64(time.Hour), user.Username)
+	// and exec the query
+	okay <- true
+
 }

@@ -4,22 +4,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 )
-
-// manage the errors
-func errorControl(err error, codeMessage chan codeHTTP, message string, code int) {
-	if err != nil {
-		log.Println(err)
-		codeMessage <- codeHTTP{
-			Message: message,
-			Code:    code,
-		}
-
-		return
-	}
-
-}
 
 // encrypt the data
 func encryptData(data string) *string {
