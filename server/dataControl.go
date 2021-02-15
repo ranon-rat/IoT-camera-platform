@@ -182,7 +182,7 @@ func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 		return // manage the errors
 	}
 	// generate the token
-	token := *encryptData(fmt.Sprintf("%s%f", (*encryptData(user.Password) + *encryptData(user.Username)), rand.Float64()*1000))
+	token := *encryptData(fmt.Sprintf("%f%s%f", rand.Float64()*1000, (*encryptData(user.Password) + *encryptData(user.Username)), rand.Float64()*1000))
 	defer db.Close()
 	// prepare the sentence
 	stm, _ := db.Prepare(q)
