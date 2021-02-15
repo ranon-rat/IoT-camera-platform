@@ -171,7 +171,7 @@ func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 	BEGIN TRANSACTION;
 		UPDATE usercameras 
 			SET token = ?1 
-			WHERE username = ?2;
+			WHERE username = ?2 AND password=?3;
 	END TRANSACTION;`
 	// we get a connection
 	db, err := getConnection()
@@ -186,7 +186,7 @@ func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 	defer db.Close()
 	// prepare the sentence
 	stm, _ := db.Prepare(q)
-	stm.Exec(encryptData(token), user.Username)
+	stm.Exec(encryptData(token), user.Username, user.Password)
 	tokenChan <- (token) // and send the token
 	okay <- true
 
