@@ -21,7 +21,7 @@ func getConnection() (*sql.DB, error) {
 	}
 	return db, nil
 }
-func exist(user string, ip string, sizeChan chan int, okay chan bool) {
+func exist(user string, ip string, sizeChan chan int) {
 
 	q := `SELECT COUNT(*) 
 		FROM usercameras 
@@ -37,7 +37,7 @@ func exist(user string, ip string, sizeChan chan int, okay chan bool) {
 		if err != nil {
 			log.Println(err)
 			close(sizeChan)
-			okay <- false
+
 			return // manage the errors
 		}
 
@@ -52,36 +52,20 @@ func exist(user string, ip string, sizeChan chan int, okay chan bool) {
 			if err != nil {
 				log.Println(err)
 				close(sizeChan)
-				okay <- false
+
 				return // manage the errors
 			}
 
 		}
 
 	}
-	okay <- true
+
 	sizeChan <- size
 
 }
 
 // register func
 func registerUserCameraDatabase(user registerCamera, okay chan bool) {
-
-	sizeChan := make(chan int, 1)
-	// creo que esto deberia de marcarnos si sizeChan esta cerrado o no
-	// asi creo que PODRIAMOS manejar  los errores
-
-	if len(user.Username) == 0 || len(user.Password) == 0 {
-		okay <- false
-		return
-	}
-	// we check if the username of the camera already exist
-	go exist(user.Username, *encryptData(user.IP), sizeChan, okay)
-
-	if <-sizeChan > 0 {
-		okay <- false
-		return // manage the errors
-	}
 
 	// the query for insert the data
 	q := `
@@ -211,4 +195,45 @@ func updateUsages(user registerCamera, okay chan bool) {
 	// and exec the query
 	okay <- true
 
+}
+func verifyToken(camera streamCamera, valid chan bool, nameChan chan string) {
+	q := `SELECT name FROM usercameras 
+		WHERE token=?1;
+		BEGIN TRANSACTION;
+			UPDATE usercameras 
+				SET  last_time_login = ?1
+				WHERE token = ?1;
+		END TRANSACTION;`
+	// uso esto para cambiar la ultima ves que se conecto
+	db, err := getConnection()
+	if err != nil {
+		valid <- false
+		log.Println(err)
+		close(nameChan)
+		return
+	}
+	defer db.Close()
+	info, err := db.Query(q, *encryptData(camera.Token), time.Now().UnixNano()/int64(time.Hour))
+	if err != nil {
+		valid <- false
+		log.Println(err)
+		close(nameChan)
+		return
+
+	}
+	names, name := []string{}, ""
+
+	for info.Next() {
+
+		err = info.Scan(&name)
+		if err != nil {
+			valid <- false
+			close(nameChan)
+			log.Println(err)
+			return
+		}
+	}
+	names = append(names, name)
+	valid <- len(names) > 0
+	nameChan <- name
 }

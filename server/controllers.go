@@ -15,7 +15,21 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		newUser.IP = r.Header.Get("x-forwarded-for")
 		errChan := make(chan bool)
 		go registerUserCameraDatabase(newUser, errChan)
+		if len(newUser.Username) == 0 || len(newUser.Password) == 0 {
+			http.Error(w, "your password or your username is empty", 406)
+			return
+		}
+		sizeChan := make(chan int, 1)
+		// creo que esto deberia de marcarnos si sizeChan esta cerrado o no
+		// asi creo que PODRIAMOS manejar  los errores
 
+		// we check if the username of the camera already exist
+		go exist(newUser.Username, *encryptData(newUser.IP), sizeChan)
+
+		if <-sizeChan > 0 {
+			http.Error(w, "that user has been already registered", 409)
+			return // manage the errors
+		}
 		if <-errChan {
 
 			http.Error(w, "something is bad , try again in other moment", 502)
