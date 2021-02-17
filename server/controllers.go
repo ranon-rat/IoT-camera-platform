@@ -13,7 +13,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		var newUser registerCamera
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
-
+		// if the password is empty send you this
 		if len(newUser.Username) == 0 || len(newUser.Password) == 0 {
 			http.Error(w, "your password or your username is empty", 406)
 			return
@@ -24,16 +24,17 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 
 		// we check if the username of the camera already exist
 		go exist(newUser.Username, *encryptData(newUser.IP), sizeChan)
-
 		if <-sizeChan > 0 {
 			http.Error(w, "that user has been already registered", 409)
 			return // manage the errors
 		}
+		//this regist the user for the database
 		go registerUserCameraDatabase(newUser, errChan)
 		if <-errChan {
 			http.Error(w, "internal server error", 500)
 			return
 		}
+		//if everything is fine send you this
 		w.Write([]byte("now you are registered "))
 
 		break
