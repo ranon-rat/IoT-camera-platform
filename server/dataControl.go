@@ -69,11 +69,9 @@ func registerUserCameraDatabase(user registerCamera, okay chan bool) {
 
 	// the query for insert the data
 	q := `
-	BEGIN TRANSACTION;
 		INSERT INTO 
 			usercameras(ip,password,username,last_time_login)
-			VALUES(?1,?2,?3,?4) 
-	END TRANSACTION;`
+			VALUES(?1,?2,?3,?4) `
 	// we get the connection
 	db, err := getConnection()
 	if err != nil {
@@ -94,14 +92,25 @@ func registerUserCameraDatabase(user registerCamera, okay chan bool) {
 
 	defer stm.Close()
 	//then we run the query
-	r, _ := stm.Exec(
+	r, err := stm.Exec(
 		encryptData(user.IP),
 		encryptData(user.Password),
 		user.Username,
 		time.Now().UnixNano()/int64(time.Hour),
 	)
+	if err != nil {
+		okay <- false
+		log.Println(err)
+		return // manage the errors
+	}
+
 	// if more than one file is affected we return an error
-	i, _ := r.RowsAffected()
+	i, err := r.RowsAffected()
+	if err != nil {
+		okay <- false
+		log.Println(err)
+		return // manage the errors
+	}
 	if i > 1 {
 		log.Printf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q, *encryptData(user.IP), *encryptData(user.Password), user.Username)
 		if err != nil {
@@ -152,11 +161,11 @@ func loginUserCameraDatabase(user registerCamera, validChan chan bool) {
 func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 
 	q := `
-	BEGIN TRANSACTION;
+
 		UPDATE usercameras 
 			SET token = ?1 
 			WHERE username = ?2 AND password=?3;
-	END TRANSACTION;`
+	`
 	// we get a connection
 	db, err := getConnection()
 	if err != nil {
@@ -179,11 +188,11 @@ func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 // we update the last time that he send somethings
 func updateUsages(user registerCamera, okay chan bool) {
 	// the query
-	q := `BEGIN TRANSACTION;
+	q := `
 			UPDATE usercameras 
 				SET  last_time_login = ?1 
 				WHERE username = ?2;
-		END TRANSACTION;`
+			`
 	db, err := getConnection() // get the connection
 	if err != nil {
 		log.Println(err)
@@ -199,11 +208,10 @@ func updateUsages(user registerCamera, okay chan bool) {
 func verifyToken(camera streamCamera, valid chan bool, nameChan chan string) {
 	q := `SELECT name FROM usercameras 
 		WHERE token=?1;
-		BEGIN TRANSACTION;
+		
 			UPDATE usercameras 
 				SET  last_time_login = ?1
-				WHERE token = ?1;
-		END TRANSACTION;`
+				WHERE token = ?1;`
 	// uso esto para cambiar la ultima ves que se conecto
 	db, err := getConnection()
 	if err != nil {
