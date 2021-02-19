@@ -83,26 +83,16 @@ func registerUserCameraDatabase(user registerCamera, okay chan bool) {
 	defer db.Close()
 	//we use stm to avoid attacks
 
-	stm, err := db.Prepare(q)
-	if err != nil {
-		log.Println(err)
-		okay <- false
-		return // manage the errors
-	} // manage the errors
+	stm, _ := db.Prepare(q)
 
 	defer stm.Close()
 	//then we run the query
-	r, err := stm.Exec(
+	r, _ := stm.Exec(
 		encryptData(user.IP),
 		encryptData(user.Password),
 		user.Username,
 		time.Now().UnixNano()/int64(time.Hour),
 	)
-	if err != nil {
-		okay <- false
-		log.Println(err)
-		return // manage the errors
-	}
 
 	// if more than one file is affected we return an error
 	i, err := r.RowsAffected()
@@ -160,11 +150,9 @@ func loginUserCameraDatabase(user registerCamera, validChan chan bool) {
 // we generate the token
 func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 
-	q := `
-
-		UPDATE usercameras 
+	q := `UPDATE usercameras 
 			SET token = ?1 
-			WHERE username = ?2 AND password=?3;
+			WHERE username = ?2 ;
 	`
 	// we get a connection
 	db, err := getConnection()
@@ -179,20 +167,22 @@ func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 	defer db.Close()
 	// prepare the sentence
 	stm, _ := db.Prepare(q)
-	stm.Exec(encryptData(token), user.Username, user.Password)
-	tokenChan <- (token) // and send the token
-	okay <- true
 
+	stm.Exec(encryptData(token), user.Username)
+
+	// and send the token
+	okay <- true
+	tokenChan <- (token)
 }
 
 // we update the last time that he send somethings
 func updateUsages(user registerCamera, okay chan bool) {
 	// the query
 	q := `
-			UPDATE usercameras 
-				SET  last_time_login = ?1 
-				WHERE username = ?2;
-			`
+		UPDATE usercameras 
+			SET  last_time_login = ?1 
+			WHERE username = ?2;
+		`
 	db, err := getConnection() // get the connection
 	if err != nil {
 		log.Println(err)
@@ -208,7 +198,6 @@ func updateUsages(user registerCamera, okay chan bool) {
 func verifyToken(camera streamCamera, valid chan bool, nameChan chan string) {
 	q := `SELECT name FROM usercameras 
 		WHERE token=?1;
-		
 			UPDATE usercameras 
 				SET  last_time_login = ?1
 				WHERE token = ?1;`
