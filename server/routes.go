@@ -16,6 +16,7 @@ func setupRoutes() error {
 	r.Handle("/public", http.FileServer(http.Dir("./public")))
 	r.HandleFunc("/register", registerUser)
 	r.HandleFunc("/login", loginUserCamera)
+	r.HandleFunc("/videoHandle",receiveImages)
 	r.HandleFunc("/start/{user}", func(w http.ResponseWriter, r *http.Request) {
 		routesvars := mux.Vars(r)
 		user, err := routesvars["user"]

@@ -16,7 +16,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
 		// if the password is empty send you this
-		 if len(newUser.Username) < 4 || len(newUser.Password) < 4 {
+		if len(newUser.Username) < 4 || len(newUser.Password) < 4 {
 			http.Error(w, "your password or your username is empty or is less than 4 characters", 406)
 			return
 		}
@@ -46,6 +46,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		break
 	}
 }
+
 // this is for login the user and send you that
 func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -71,7 +72,7 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 
 			return
 		}
-		http.Error(w, "something is wrong , verify your password, or user\n ", 502)
+		http.Error(w, "something is wrong , verify your password, or user ", 502)
 		// generate the token
 
 		break
@@ -81,6 +82,7 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 
 	}
 }
+
 /**
 // this is for the future
 func verifyAndSend(w http.ResponseWriter, r *http.Request){
@@ -93,8 +95,14 @@ func verifyAndSend(w http.ResponseWriter, r *http.Request){
 }
 */
 
-
 //========WEBSOCKETS===========\\
+func receiveImages(w http.ResponseWriter, r *http.Request) {
+	upgrade.CheckOrigin = func(r *http.Request) bool { return true }
+	ws, _ := upgrade.Upgrade(w, r, nil)
+
+	controlData(ws)
+}
+
 // this is the web camera is for receive the video and verify the token
 func controlData(conn *websocket.Conn) {
 	valid, name := false, make(chan string)
@@ -102,24 +110,25 @@ func controlData(conn *websocket.Conn) {
 	for {
 		_, userJSON, err := conn.ReadMessage()
 		if err != nil {
-			delete(videoCamera, <-name)// if the client close the conn we delete the user from the map called videoCamera
+			delete(videoCamera, <-name) // if the client close the conn we delete the user from the map called videoCamera
 			return
 		}
-		json.Unmarshal(userJSON, user)// this is for decode the formulary
+		json.Unmarshal(userJSON, user) // this is for decode the formulary
 		if valid {
-			videoCamera[<-name] = user.Image// if all is good this add the video to the variable
+			videoCamera[<-name] = user.Image // if all is good this add the video to the variable
 		} else {
-			verifyToken(user, valid, name)// if not we need to verify something for that
-		
+			verifyToken(user, valid, name) // if not we need to verify something for that
+
 		}
 
 	}
 }
-// this only send you the video 
-func transmition(conn *websocket.Conn,user string) {
-	for{
-		if err:=conn.WriteMessage(2,[]byte(user));err!=nil{
-			return// if the client close the connection return the function 
+
+// this only send you the video
+func transmition(conn *websocket.Conn, user string) {
+	for {
+		if err := conn.WriteMessage(2, []byte(user)); err != nil {
+			return // if the client close the connection return the function
 		}
 	}
 }
