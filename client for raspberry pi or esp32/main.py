@@ -21,11 +21,13 @@ res = requests.post(url_register, register_or_login)
 
 res = requests.post(url_login, register_or_login)
 if res.content != "something is wrong, verify your password, or user":
+
     token = res.content
     stream_camera = {
         "token": token,
         "image": image
     }
+    print(token)
     ws = create_connection(f"ws{url}/videoHandle")
     while True:
         ws.send(stream_camera)
