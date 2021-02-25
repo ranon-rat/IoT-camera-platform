@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 func registerUser(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +30,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "that user has been already registered", 409)
 			return // manage the errors
 		}
-		//this regist the user for the database
+		//this register the user for the database
 		go registerUserCameraDatabase(newUser, errChan)
 		if <-errChan {
 			http.Error(w, "internal server error", 500)
@@ -44,7 +46,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		break
 	}
 }
-
+// this is for login the user and send you that
 func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
@@ -79,18 +81,45 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 
 	}
 }
+/**
+// this is for the future
+func verifyAndSend(w http.ResponseWriter, r *http.Request){
+		upgrade.CheckOrigin = func(r *http.Request) bool { return true }
+	ws, err := upgrade.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+	}
+	transmition(ws)
+}
+*/
 
-/*
-func controlData(conn *websocket.Conn, user registerCamera) {
-	videoCamera[user.Username] = defaultImage
-	for{
-		message,m,err:=conn.ReadMessage()
-		if err!=nil{
-			log.Println(err)
-			break
+
+//========WEBSOCKETS===========\\
+// this is the web camera is for receive the video and verify the token
+func controlData(conn *websocket.Conn) {
+	valid, name := false, make(chan string)
+	var user streamCamera
+	for {
+		_, userJSON, err := conn.ReadMessage()
+		if err != nil {
+			delete(videoCamera, <-name)// if the client close the conn we delete the user from the map called videoCamera
+			return
 		}
-
+		json.Unmarshal(userJSON, user)// this is for decode the formulary
+		if valid {
+			videoCamera[<-name] = user.Image// if all is good this add the video to the variable
+		} else {
+			verifyToken(user, valid, name)// if not we need to verify something for that
+		
+		}
 
 	}
 }
-*/
+// this only send you the video 
+func transmition(conn *websocket.Conn,user string) {
+	for{
+		if err:=conn.WriteMessage(2,[]byte(user));err!=nil{
+			return// if the client close the connection return the function 
+		}
+	}
+}

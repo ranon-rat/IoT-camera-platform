@@ -195,7 +195,7 @@ func updateUsages(user registerCamera, okay chan bool) {
 	okay <- true
 
 }
-func verifyToken(camera streamCamera, valid chan bool, nameChan chan string) {
+func verifyToken(camera streamCamera, valid  bool, nameChan chan string) {
 	q := `SELECT name FROM usercameras 
 		WHERE token=?1;
 			UPDATE usercameras 
@@ -204,7 +204,7 @@ func verifyToken(camera streamCamera, valid chan bool, nameChan chan string) {
 	// uso esto para cambiar la ultima ves que se conecto
 	db, err := getConnection()
 	if err != nil {
-		valid <- false
+		valid = false
 		log.Println(err)
 		close(nameChan)
 		return
@@ -212,7 +212,7 @@ func verifyToken(camera streamCamera, valid chan bool, nameChan chan string) {
 	defer db.Close()
 	info, err := db.Query(q, *encryptData(camera.Token), time.Now().UnixNano()/int64(time.Hour))
 	if err != nil {
-		valid <- false
+		valid = false
 		log.Println(err)
 		close(nameChan)
 		return
@@ -224,13 +224,13 @@ func verifyToken(camera streamCamera, valid chan bool, nameChan chan string) {
 
 		err = info.Scan(&name)
 		if err != nil {
-			valid <- false
+			valid = false
 			close(nameChan)
 			log.Println(err)
 			return
 		}
 	}
 	names = append(names, name)
-	valid <- len(names) > 0
+	valid = len(names) > 0
 	nameChan <- name
 }
