@@ -27,6 +27,6 @@ if res.content == "sorry but that user has already registered":
             "image": image
         }
 
-        ws = create_connection(f"ws:{url}/videoHandle")
+        ws = create_connection(f"ws{url}/videoHandle")
         while True:
           ws.send(stream_camera)
