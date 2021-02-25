@@ -234,3 +234,4 @@ func verifyToken(camera streamCamera, valid  bool, nameChan chan string) {
 	valid = len(names) > 0
 	nameChan <- name
 }
+func verifyTheCookie(){}
