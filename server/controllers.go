@@ -16,8 +16,8 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
 		// if the password is empty send you this
-		if len(newUser.Username) == 0 || len(newUser.Password) == 0 {
-			http.Error(w, "your password or your username is empty", 406)
+		 if len(newUser.Username) < 4 || len(newUser.Password) < 4 {
+			http.Error(w, "your password or your username is empty or is less than 4 characters", 406)
 			return
 		}
 		errChan, sizeChan := make(chan bool), make(chan int, 1)
