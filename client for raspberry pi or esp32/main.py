@@ -3,7 +3,7 @@ from websocket import create_connection
 import base64
 
 
-#routes
+# routes
 url = "://localhost:8080"
 url_register = f"http{url}/register"
 url_login = f"http{url}/login"
@@ -11,22 +11,21 @@ url_login = f"http{url}/login"
 token = ""
 # open binary file in read mode
 image = base64.encodestring(open('HelloImage.png', 'rb').read())
-#body request
+# body request
 register_or_login = {
     "username": "pai",
     "password": "123"
 }
-#error managment
+# error managment
 res = requests.post(url_register, register_or_login)
-if res.content == "sorry but that user has already registered":
-    res = requests.post(url_login, register_or_login)
-    if res.content != "something is wrong, verify your password, or user":
-        token = res.content
-        stream_camera = {
-            "token": token,
-            "image": image
-        }
 
-        ws = create_connection(f"ws{url}/videoHandle")
-        while True:
-          ws.send(stream_camera)
+res = requests.post(url_login, register_or_login)
+if res.content != "something is wrong, verify your password, or user":
+    token = res.content
+    stream_camera = {
+        "token": token,
+        "image": image
+    }
+    ws = create_connection(f"ws{url}/videoHandle")
+    while True:
+        ws.send(stream_camera)
