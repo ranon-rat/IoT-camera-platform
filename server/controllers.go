@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -116,6 +117,7 @@ func controlData(conn *websocket.Conn) {
 		json.Unmarshal(userJSON, user) // this is for decode the formulary
 		if valid {
 			videoCamera[<-name] = user.Image // if all is good this add the video to the variable
+			log.Println("we did it ")
 		} else {
 			verifyToken(user, valid, name) // if not we need to verify something for that
 
