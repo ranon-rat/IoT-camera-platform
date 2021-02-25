@@ -207,7 +207,7 @@ SELECT name FROM usercameras
 selecciona el nombre , checa si el token existe y actualiza la ultima vez que se han conectado
 
 
-# otherStuff.go
+# [otherStuff.go](https://github.com/ranon-rat/IoT-camera-platform/blob/master/server/otherStuff.go)
 
 ### para que es ?
 
