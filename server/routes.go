@@ -12,11 +12,14 @@ func setupRoutes() error {
 	log.Println("setup router")
 
 	r := mux.NewRouter()
-
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		
+		
+	})
 	r.Handle("/public", http.FileServer(http.Dir("./public")))
 	r.HandleFunc("/register", registerUser)
 	r.HandleFunc("/login", loginUserCamera)
-	r.HandleFunc("/videoHandle",receiveImages)
+	r.HandleFunc("/videoHandle", receiveImages)
 	r.HandleFunc("/start/{user}", func(w http.ResponseWriter, r *http.Request) {
 		routesvars := mux.Vars(r)
 		user, err := routesvars["user"]

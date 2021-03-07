@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+//******** CAMERA *******************
 func registerUser(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
@@ -84,17 +85,11 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/**
-// this is for the future
-func verifyAndSend(w http.ResponseWriter, r *http.Request){
-		upgrade.CheckOrigin = func(r *http.Request) bool { return true }
-	ws, err := upgrade.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-	}
-	transmition(ws)
+
+func loginClientFromCamera(w http.ResponseWriter, r *http.Request){
+
 }
-*/
+
 
 //========WEBSOCKETS===========\\
 func receiveImages(w http.ResponseWriter, r *http.Request) {
@@ -106,31 +101,24 @@ func receiveImages(w http.ResponseWriter, r *http.Request) {
 
 // this is the web camera is for receive the video and verify the token
 func controlData(conn *websocket.Conn) {
-	valid, name := false, make(chan string)
+	valid, name := false, ""
 	var user streamCamera
 	for {
 		_, userJSON, err := conn.ReadMessage()
 		if err != nil {
-			delete(videoCamera, <-name) // if the client close the conn we delete the user from the map called videoCamera
+			delete(videoCamera, name) // if the client close the conn we delete the user from the map called videoCamera
 			return
 		}
 		json.Unmarshal(userJSON, user) // this is for decode the formulary
 		if valid {
-			videoCamera[<-name] = user.Image // if all is good this add the video to the variable
+			videoCamera[name] = user.Image // if all is good this add the video to the variable
 			log.Println("we did it ")
 		} else {
-			verifyToken(user, valid, name) // if not we need to verify something for that
+			verifyToken(user, &valid,&name) // if not we need to verify something for that
 
 		}
 
 	}
 }
 
-// this only send you the video
-func transmition(conn *websocket.Conn, user string) {
-	for {
-		if err := conn.WriteMessage(2, []byte(user)); err != nil {
-			return // if the client close the connection return the function
-		}
-	}
-}
+

@@ -195,7 +195,7 @@ func updateUsages(user registerCamera, okay chan bool) {
 	okay <- true
 
 }
-func verifyToken(camera streamCamera, valid  bool, nameChan chan string) {
+func verifyToken(camera streamCamera, valid *bool, nameChan *string) {
 	q := `SELECT name FROM usercameras 
 		WHERE token=?1;
 			UPDATE usercameras 
@@ -204,34 +204,84 @@ func verifyToken(camera streamCamera, valid  bool, nameChan chan string) {
 	// uso esto para cambiar la ultima ves que se conecto
 	db, err := getConnection()
 	if err != nil {
-		valid = false
 		log.Println(err)
-		close(nameChan)
 		return
 	}
 	defer db.Close()
 	info, err := db.Query(q, *encryptData(camera.Token), time.Now().UnixNano()/int64(time.Hour))
 	if err != nil {
-		valid = false
 		log.Println(err)
-		close(nameChan)
 		return
 
 	}
 	names, name := []string{}, ""
 
 	for info.Next() {
-
 		err = info.Scan(&name)
 		if err != nil {
-			valid = false
-			close(nameChan)
 			log.Println(err)
 			return
 		}
 	}
 	names = append(names, name)
-	valid = len(names) > 0
-	nameChan <- name
+	*valid = len(names) > 0
+	*nameChan = name
 }
-func verifyTheCookie(){}
+func getID(user registerCamera,idChan chan int){
+	q:=`SELECT id FROM usercameras
+		WHERE username=?1 `
+	db,err:=getConnection()
+	if err!=nil{
+		log.Println(err.Error())
+		idChan<-0
+		return
+	}
+	defer db.Close()
+	idRow,_:=db.Query(q,user.Username)
+	id:=0
+	for idRow.Next(){
+		idRow.Scan(&id)
+	}
+	idChan<-id
+
+}
+func addTheCookieToTheDatabase(id int, cookieName string) {
+	q := `INSERT INTO userclients(id_camera_client,cookie) VALUES(?1,?2);`
+	/**
+
+	| name             | type                 |
+	| ---------------- | -------------------- |
+	| id               | INTEGER PRIMARY KEY, |
+	| id_camera_client | INTEGER NOT NULL,    |
+	| cookie           | TEXT NOT NULL        |
+	*/
+	db, err := getConnection()
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	defer db.Close()
+	stm, _ := db.Prepare(q)
+	defer stm.Close()
+	stm.Exec(id, *encryptData(cookieName))
+
+}
+func verifyTheCookie(cookieName string, validCookie chan bool) {
+	q := `SELECT COUNT(*) FROM userclients 
+			WHERE cookie =?1;
+	`
+	db, err := getConnection()
+	if err != nil {
+		log.Println(err.Error())
+		validCookie <- false
+		return
+	}
+	defer db.Close()
+	c, _ := db.Query(q, cookieName)
+	cSize := 0
+	for c.Next() {
+		c.Scan(&cSize)
+	}
+	validCookie<-cSize==1
+
+}

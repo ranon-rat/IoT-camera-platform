@@ -45,7 +45,7 @@ si haces un post request deberia de ejecutar la funcion `loginUserCameraDatabase
 
 ## func controlData()
 
-esta funcion para lo que es es para agregar la imagen que reciba en base64 y esta se agregar el usuario a la variable map[] llamada `videoCamera` para empezar a transmitir, es para conexiones con websockets y solo para eso 
+esta funcion para lo que es es para agregar la imagen que reciba en base64 y esta se agregar el usuario a la variable map[] llamada `videoCamera` para empezar a transmitir, es para conexiones con websockets y solo para eso
 
 ## transmition()
 
@@ -59,8 +59,6 @@ esta funcion esta hecha para transmitir al usuario el video que se recibe por la
 
 En este archivo se realizan ciertas operaciones para funcionar con la base de datos
 
-
-
 <!--------------------->
 
 ## getConnection()
@@ -72,8 +70,6 @@ func getConnection() (*sql.DB,error){}
 ```
 
 la base de datos con la que se conecta es `iotcameradata.db` ahi en la funcion `getConnection()` se conecta de manera directa asi que no hace falta hacer mucho
-
-
 
 ## exist()
 
@@ -204,8 +200,8 @@ SELECT name FROM usercameras
 				SET  last_time_login = ?1
 				WHERE token = ?1;
 ```
-selecciona el nombre , checa si el token existe y actualiza la ultima vez que se han conectado
 
+selecciona el nombre , checa si el token existe y actualiza la ultima vez que se han conectado
 
 # [otherStuff.go](https://github.com/ranon-rat/IoT-camera-platform/blob/master/server/otherStuff.go)
 
@@ -241,8 +237,10 @@ func encryptData(data string) *string
 
 ### userclients
 
-| name   | type  |
-| ------ | ----- |
-| cookie | TEXT  |
+| name             | type                 |
+| ---------------- | -------------------- |
+| id               | INTEGER PRIMARY KEY, |
+| id_camera_client | INTEGER NOT NULL,    |
+| cookie           | TEXT NOT NULL        |
 
 por ahora no hemos implementado esta base de datos pero asi funciona
