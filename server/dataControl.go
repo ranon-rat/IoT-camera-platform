@@ -261,10 +261,8 @@ func addTheCookieToTheDatabase(id string, cookieName string) {
 		return
 	}
 	defer db.Close()
-	_,err=db.Exec(q,id,*encryptData(cookieName))
-	if err!=nil{
-		fmt.Println(err.Error())
-	}
+	db.Exec(q,id,*encryptData(cookieName))
+	
 
 
 }
