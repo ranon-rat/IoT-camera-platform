@@ -227,13 +227,13 @@ func verifyToken(camera streamCamera, valid *bool, nameChan *string) {
 	*valid = len(names) > 0
 	*nameChan = name
 }
-func getID(user registerCamera,idChan chan int){
+func getID(user registerCamera,idChan chan string){
 	q:=`SELECT id FROM usercameras
 		WHERE username=?1 `
 	db,err:=getConnection()
 	if err!=nil{
 		log.Println(err.Error())
-		idChan<-0
+		idChan<-""
 		return
 	}
 	defer db.Close()
@@ -242,10 +242,10 @@ func getID(user registerCamera,idChan chan int){
 	for idRow.Next(){
 		idRow.Scan(&id)
 	}
-	idChan<-id
+	idChan<-""
 
 }
-func addTheCookieToTheDatabase(id int, cookieName string) {
+func addTheCookieToTheDatabase(id string, cookieName string) {
 	q := `INSERT INTO userclients(id_camera_client,cookie) VALUES(?1,?2);`
 	/**
 
@@ -261,9 +261,8 @@ func addTheCookieToTheDatabase(id int, cookieName string) {
 		return
 	}
 	defer db.Close()
-	stm, _ := db.Prepare(q)
-	defer stm.Close()
-	stm.Exec(id, *encryptData(cookieName))
+	db.Query(q,id,*encryptData(cookieName))
+
 
 }
 func verifyTheCookie(cookieName string, validCookie chan bool) {

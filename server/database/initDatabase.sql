@@ -1,6 +1,6 @@
 CREATE TABLE usercameras(
     id INTEGER PRIMARY KEY,
-    ip VARCHAR(64)    ,MN BVCXA<NOT NULL,
+    ip VARCHAR(64) NOT NULL,
     password VARCHAR(64) NOT NULL,
     token VARCHAR(64),
     username TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE usercameras(
 
 CREATE TABLE userclients(
     id INTEGER PRIMARY KEY,
-    id_camera_client INTEGER NOT NULL,
+    id_camera_client TEXT NOT NULL,
     -- this is for be related with the table usercameras
     cookie TEXT NOT NULL
 );

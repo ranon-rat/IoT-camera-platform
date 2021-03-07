@@ -92,21 +92,26 @@ func loginClientFromCamera(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 
-		valid, idChan, newUserReal := make(chan bool), make(chan int), registerCamera{}
+		valid, idChan, newUserReal := make(chan bool), make(chan string), registerCamera{}
 		json.NewDecoder(r.Body).Decode(&newUserReal)
 		go loginUserCameraDatabase(newUserReal, valid)
 		if <-valid {
+			fmt.Println("new cookie")
 			go getID(newUserReal, idChan)
-			valueCookie := *encryptData(fmt.Sprintf("%d%s%f%s",
-				<-idChan, newUserReal.Password, rand.Float64()*1000,
+			id:=<-idChan
+			valueCookie := *encryptData(fmt.Sprintf("%s%s%f%s",
+				id, newUserReal.Password, rand.Float64()*1000,
 				newUserReal.Username))
 
-			go addTheCookieToTheDatabase(<-idChan, valueCookie)
+			
+			go addTheCookieToTheDatabase(id, valueCookie)
+
 			http.SetCookie(w, &http.Cookie{
-				Name:   newUserReal.Username,
+				Name:    newUserReal.Username,
 				Value:   valueCookie,
 				Expires: time.Now().AddDate(0, 0, 1),
 			})
+			return
 		}
 		break
 	case "GET":
