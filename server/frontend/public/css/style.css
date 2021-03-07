@@ -6,15 +6,15 @@ body {
 }
 #login {
   float: left;
-  color:aliceblue;
+  color: aliceblue;
   background-color: rgb(36, 33, 80);
   width: 20em;
   height: 25em;
   margin: 10px;
 }
-#login h1{
-    position:relative;
-    left:10px;
+#login h1 {
+  position: relative;
+  left: 10px;
 }
 #submit {
   /*size*/
@@ -26,12 +26,16 @@ body {
   background-color: rgb(122, 99, 223);
   border: rgb(122, 99, 223) 2px solid;
   border-radius: 2px;
-  color:aliceblue;
+  color: aliceblue;
   font-weight: 100px;
   /*position*/
   position: relative;
   top: 12px;
   left: 10px;
+}
+#submit:hover {
+  background-color: rgb(182, 166, 253);
+  border: rgb(182, 166, 253) 2px solid;
 }
 #about {
   /*position*/
@@ -43,14 +47,14 @@ body {
   /**size**/
   width: 40em;
   /*color*/
-  border:  rgb(36, 33, 80) 10px solid;
+  border: rgb(36, 33, 80) 10px solid;
   border-radius: 2px;
   color: aliceblue;
   background-color: rgb(36, 33, 80);
 }
-#about img{
-    width:20em;
-    float:left;
+#about img {
+  width: 20em;
+  float: left;
 }
 .login {
   overflow: hidden;
