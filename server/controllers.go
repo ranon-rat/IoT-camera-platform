@@ -87,6 +87,16 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 
 
 func loginClientFromCamera(w http.ResponseWriter, r *http.Request){
+	switch r.Method{
+	case "POST":
+		w.Write([]byte("nice"))
+		break
+	case "GET":
+		http.ServeFile(w,r,"./frontend/view/index.html")
+	default:
+		http.Error(w, "you cant do that 😡", 405)
+
+	}
 
 }
 

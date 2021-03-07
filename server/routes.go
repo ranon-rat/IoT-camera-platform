@@ -12,11 +12,10 @@ func setupRoutes() error {
 	log.Println("setup router")
 
 	r := mux.NewRouter()
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		
-		
+	r.HandleFunc("/", loginClientFromCamera)
+	r.HandleFunc(`/frontend/{file:[\/\w\d\W]+?}`, func(w http.ResponseWriter, r *http.Request){
+		http.ServeFile(w, r, r.URL.Path[1:])
 	})
-	r.Handle("/public", http.FileServer(http.Dir("./public")))
 	r.HandleFunc("/register", registerUser)
 	r.HandleFunc("/login", loginUserCamera)
 	r.HandleFunc("/videoHandle", receiveImages)

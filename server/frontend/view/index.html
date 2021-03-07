@@ -1,17 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src= "/public/script/script.js"></script>
-</head>
-<body>
-    <div id="login">
-        <input type="text" id="name" required>
-        <input type="text" id="password" required>
-        <button id="submit" </div>
-    
-</body>
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <script src="/frontend/public/script/home.js"></script>
+        <link rel="stylesheet" href="/frontend/public/css/style.css">
+    </head>
+
+    <body>
+        <div id="login">
+            <p>
+                <h1>
+                    username
+                </h1>
+                <input class ="login" type="text" id="name" required>
+            </p>
+            <p>
+                <h1>
+                    password
+                </h1>
+                <input class="login" type="text" id="password" required>
+            </p>
+            <p>
+                <button id="submit" onclick="sendPassword()" >
+                    submit 
+                </button>
+            </p>
+        </div>
+        <div id = "about">
+            <h1>
+            a simple applitacion<br>
+            writed in golang<br>
+             with the best velocity<br>
+             that we can reach.
+            </h1>
+            <img src="https://miro.medium.com/max/3150/1*yh90bW8jL4f8pOTZTvbzqw.png">
+        </div>
+    </body>
+
 </html>
