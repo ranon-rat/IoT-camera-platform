@@ -148,7 +148,7 @@ func loginUserCameraDatabase(user registerCamera, validChan chan bool) {
 }
 
 // we generate the token
-func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
+func generateToken(user registerCamera, tokenChan chan string, ) {
 
 	q := `UPDATE usercameras 
 			SET token = ?1 
@@ -159,7 +159,7 @@ func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 	if err != nil {
 		log.Println(err)
 		close(tokenChan)
-		okay <- false
+		
 		return // manage the errors
 	}
 	// generate the token
@@ -171,12 +171,12 @@ func generateToken(user registerCamera, tokenChan chan string, okay chan bool) {
 	stm.Exec(encryptData(token), user.Username)
 
 	// and send the token
-	okay <- true
+	
 	tokenChan <- (token)
 }
 
 // we update the last time that he send somethings
-func updateUsages(user registerCamera, okay chan bool) {
+func updateUsages(user registerCamera) {
 	// the query
 	q := `
 		UPDATE usercameras 
@@ -186,13 +186,13 @@ func updateUsages(user registerCamera, okay chan bool) {
 	db, err := getConnection() // get the connection
 	if err != nil {
 		log.Println(err)
-		okay <- false
+		
 		return // manage the errors
 	} // manage the errors
 	defer db.Close()
 	db.Exec(q, time.Now().UnixNano()/int64(time.Hour), user.Username)
 	// and exec the query
-	okay <- true
+
 
 }
 func verifyToken(camera streamCamera, valid *bool, nameChan *string) {

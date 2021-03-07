@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -18,10 +21,12 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&newUser)
 		newUser.IP = r.Header.Get("x-forwarded-for")
 		// if the password is empty send you this
-		if len(newUser.Username) < 4 || len(newUser.Password) < 4 {
+
+		if len(newUser.Username) < 3 || len(newUser.Password) < 3 {
 			http.Error(w, "your password or your username is empty or is less than 4 characters", 406)
 			return
 		}
+
 		errChan, sizeChan := make(chan bool), make(chan int, 1)
 		// creo que esto deberia de marcarnos si sizeChan esta cerrado o no
 		// asi creo que PODRIAMOS manejar  los errores
@@ -58,18 +63,16 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&oldUser)
 		oldUser.IP = r.Header.Get("x-forwarded-for")
 		//  we use this for asynchronous communication
-		errChan, valid, token := make(chan bool), make(chan bool), make(chan string)
+		valid, token := make(chan bool), make(chan string)
 		// check if all is okay
 
 		go loginUserCameraDatabase(oldUser, valid)
 
 		if <-valid {
-			go updateUsages(oldUser, errChan) // we update the last time that he send something
-			go generateToken(oldUser, token, errChan)
-			if !<-errChan {
-				http.Error(w, "something is bad,try again in other moment ", 502)
-				return
-			}
+			fmt.Println("is valid")
+			go updateUsages(oldUser) // we update the last time that he send something
+			go generateToken(oldUser, token)
+
 			w.Write([]byte(<-token))
 
 			return
@@ -85,21 +88,35 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
-func loginClientFromCamera(w http.ResponseWriter, r *http.Request){
-	switch r.Method{
+func loginClientFromCamera(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
 	case "POST":
-		w.Write([]byte("nice"))
+
+		valid, idChan, newUserReal := make(chan bool), make(chan int), registerCamera{}
+		json.NewDecoder(r.Body).Decode(&newUserReal)
+		go loginUserCameraDatabase(newUserReal, valid)
+		if <-valid {
+			go getID(newUserReal, idChan)
+			valueCookie := *encryptData(fmt.Sprintf("%d%s%f%s",
+				<-idChan, newUserReal.Password, rand.Float64()*1000,
+				newUserReal.Username))
+
+			go addTheCookieToTheDatabase(<-idChan, valueCookie)
+			http.SetCookie(w, &http.Cookie{
+				Name:   newUserReal.Username,
+				Value:   valueCookie,
+				Expires: time.Now().AddDate(0, 0, 1),
+			})
+		}
 		break
 	case "GET":
-		http.ServeFile(w,r,"./frontend/view/index.html")
+		http.ServeFile(w, r, "./frontend/view/index.html")
 	default:
 		http.Error(w, "you cant do that 😡", 405)
 
 	}
 
 }
-
 
 //========WEBSOCKETS===========\\
 func receiveImages(w http.ResponseWriter, r *http.Request) {
@@ -124,11 +141,9 @@ func controlData(conn *websocket.Conn) {
 			videoCamera[name] = user.Image // if all is good this add the video to the variable
 			log.Println("we did it ")
 		} else {
-			verifyToken(user, &valid,&name) // if not we need to verify something for that
+			verifyToken(user, &valid, &name) // if not we need to verify something for that
 
 		}
 
 	}
 }
-
-
