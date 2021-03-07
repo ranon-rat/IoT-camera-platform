@@ -228,7 +228,7 @@ func verifyToken(camera streamCamera, valid *bool, nameChan *string) {
 	*nameChan = name
 }
 func getID(user registerCamera,idChan chan string){
-	q:=`SELECT id FROM usercameras
+	q:=`SELECT username FROM usercameras
 		WHERE username=?1 `
 	db,err:=getConnection()
 	if err!=nil{
@@ -261,7 +261,10 @@ func addTheCookieToTheDatabase(id string, cookieName string) {
 		return
 	}
 	defer db.Close()
-	db.Query(q,id,*encryptData(cookieName))
+	_,err=db.Exec(q,id,*encryptData(cookieName))
+	if err!=nil{
+		fmt.Println(err.Error())
+	}
 
 
 }
