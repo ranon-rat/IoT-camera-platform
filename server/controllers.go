@@ -36,10 +36,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		
 		//this register the user for the database
 		go registerUserCameraDatabase(newUser, errChan)
-		if <-errChan {
-			http.Error(w, "internal server error", 500)
-			return
-		}
+		
 		//if everything is fine send you this
 		w.Write([]byte("now you are registered "))
 
@@ -66,7 +63,7 @@ func loginUserCamera(w http.ResponseWriter, r *http.Request) {
 		go loginUserCameraDatabase(oldUser, valid)
 
 		if <-valid {
-			fmt.Println("is valid")
+		
 			go updateUsages(oldUser) // we update the last time that he send something
 			go generateToken(oldUser, token)
 

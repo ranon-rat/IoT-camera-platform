@@ -22,7 +22,6 @@ func getConnection() (*sql.DB, error) {
 	return db, nil
 }
 
-
 // register func
 func registerUserCameraDatabase(user registerCamera, okay chan bool) {
 
@@ -43,14 +42,14 @@ func registerUserCameraDatabase(user registerCamera, okay chan bool) {
 	//we use stm to avoid attacks
 
 	stm, err := db.Prepare(q)
-	if err!=nil{
-		okay<-false
+	if err != nil {
+		okay <- false
 		return
 	}
 
 	defer stm.Close()
 	//then we run the query
-	r,err := stm.Exec(
+	r, err := stm.Exec(
 		encryptData(user.IP),
 		encryptData(user.Password),
 		user.Username,
@@ -101,22 +100,18 @@ func loginUserCameraDatabase(user registerCamera, validChan chan bool) {
 
 	// review the results
 	var i int
-	for valid.Next() {
-		// change the value of i
-		err = valid.Scan(&i)
 
-		if err != nil {
-			log.Println(err)
-			validChan <- false
-			return // manage the errors
-		} // manage the errors
+	// change the value of i
+	for valid.Next() {
+		valid.Scan(&i)
 	}
+
 	validChan <- i > 0
 
 }
 
 // we generate the token
-func generateToken(user registerCamera, tokenChan chan string, ) {
+func generateToken(user registerCamera, tokenChan chan string) {
 
 	q := `UPDATE usercameras 
 			SET token = ?1 
@@ -127,7 +122,7 @@ func generateToken(user registerCamera, tokenChan chan string, ) {
 	if err != nil {
 		log.Println(err)
 		close(tokenChan)
-		
+
 		return // manage the errors
 	}
 	// generate the token
@@ -139,7 +134,7 @@ func generateToken(user registerCamera, tokenChan chan string, ) {
 	stm.Exec(encryptData(token), user.Username)
 
 	// and send the token
-	
+
 	tokenChan <- (token)
 }
 
@@ -154,13 +149,12 @@ func updateUsages(user registerCamera) {
 	db, err := getConnection() // get the connection
 	if err != nil {
 		log.Println(err)
-		
+
 		return // manage the errors
 	} // manage the errors
 	defer db.Close()
 	db.Exec(q, time.Now().UnixNano()/int64(time.Hour), user.Username)
 	// and exec the query
-
 
 }
 func verifyToken(camera streamCamera, valid *bool, nameChan *string) {
@@ -195,22 +189,22 @@ func verifyToken(camera streamCamera, valid *bool, nameChan *string) {
 	*valid = len(names) > 0
 	*nameChan = name
 }
-func getID(user registerCamera,idChan chan string){
-	q:=`SELECT username FROM usercameras
+func getID(user registerCamera, idChan chan string) {
+	q := `SELECT username FROM usercameras
 		WHERE username=?1 `
-	db,err:=getConnection()
-	if err!=nil{
+	db, err := getConnection()
+	if err != nil {
 		log.Println(err.Error())
-		idChan<-""
+		idChan <- ""
 		return
 	}
 	defer db.Close()
-	idRow,_:=db.Query(q,user.Username)
-	id:=0
-	for idRow.Next(){
+	idRow, _ := db.Query(q, user.Username)
+	id := 0
+	for idRow.Next() {
 		idRow.Scan(&id)
 	}
-	idChan<-""
+	idChan <- ""
 
 }
 func addTheCookieToTheDatabase(id string, cookieName string) {
@@ -229,9 +223,7 @@ func addTheCookieToTheDatabase(id string, cookieName string) {
 		return
 	}
 	defer db.Close()
-	db.Exec(q,id,*encryptData(cookieName))
-	
-
+	db.Exec(q, id, *encryptData(cookieName))
 
 }
 func verifyTheCookie(cookieName string, validCookie chan bool) {
@@ -250,6 +242,6 @@ func verifyTheCookie(cookieName string, validCookie chan bool) {
 	for c.Next() {
 		c.Scan(&cSize)
 	}
-	validCookie<-cSize==1
+	validCookie <- cSize == 1
 
 }
