@@ -21,48 +21,7 @@ func getConnection() (*sql.DB, error) {
 	}
 	return db, nil
 }
-func exist(user string, ip string, sizeChan chan int) {
 
-	q := `SELECT COUNT(*) 
-		FROM usercameras 
-		WHERE username=?1 OR ip =?2 ;` // igual aqui
-	var size int
-	// GET A CONNECTION
-	db, _ := getConnection()
-
-	HowMany, err := db.Query(q, user, ip)
-	if err != nil {
-		log.Println(err)
-
-		if err != nil {
-			log.Println(err)
-			close(sizeChan)
-
-			return // manage the errors
-		}
-
-	}
-
-	defer HowMany.Close()
-
-	for HowMany.Next() {
-		err = HowMany.Scan(&size)
-		if err != nil {
-			log.Println(err)
-			if err != nil {
-				log.Println(err)
-				close(sizeChan)
-
-				return // manage the errors
-			}
-
-		}
-
-	}
-
-	sizeChan <- size
-
-}
 
 // register func
 func registerUserCameraDatabase(user registerCamera, okay chan bool) {
@@ -83,16 +42,25 @@ func registerUserCameraDatabase(user registerCamera, okay chan bool) {
 	defer db.Close()
 	//we use stm to avoid attacks
 
-	stm, _ := db.Prepare(q)
+	stm, err := db.Prepare(q)
+	if err!=nil{
+		okay<-false
+		return
+	}
 
 	defer stm.Close()
 	//then we run the query
-	r, _ := stm.Exec(
+	r,err := stm.Exec(
 		encryptData(user.IP),
 		encryptData(user.Password),
 		user.Username,
 		time.Now().UnixNano()/int64(time.Hour),
 	)
+	if err != nil {
+		okay <- false
+		log.Println(err)
+		return // manage the errors
+	}
 
 	// if more than one file is affected we return an error
 	i, err := r.RowsAffected()

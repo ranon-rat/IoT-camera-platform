@@ -52,20 +52,7 @@ func getConnection () (* sql.DB, error) {}
 ```
 the database with which it connects is `iotcameradata.db` there in the` getConnection () `function it connects directly so you don't need to do much
 <!--------------------->
-## exist ()
-The function `exist ()` is to be able to know if the user who has tried to register already exists so that some problems can be avoided when we register the user,
-the query that executes this function is
-```sql
-SELECT COUNT (*)
-FROM usercameras
-where username =? OR ip =? ; `
-```
-and the function is
-```go
-func exist (user string, ip string, sizeChan chan int) error
-```
-so it can return an error and must be used concurrently `go exist (" Fgh "," 127.0.0.1 ", sizeChan)`
-<! --------------------->
+
 ## registerUserCameraDatabase ()
 
 This function serves to register the user as long as it makes a post request

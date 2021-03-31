@@ -27,16 +27,13 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		errChan, sizeChan := make(chan bool), make(chan int, 1)
+		errChan := make(chan bool)
 		// creo que esto deberia de marcarnos si sizeChan esta cerrado o no
 		// asi creo que PODRIAMOS manejar  los errores
 
 		// we check if the username of the camera already exist
-		go exist(newUser.Username, *encryptData(newUser.IP), sizeChan)
-		if <-sizeChan > 0 {
-			http.Error(w, "that user has been already registered", 409)
-			return // manage the errors
-		}
+		
+		
 		//this register the user for the database
 		go registerUserCameraDatabase(newUser, errChan)
 		if <-errChan {

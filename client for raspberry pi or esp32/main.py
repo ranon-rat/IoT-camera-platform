@@ -10,11 +10,11 @@ url_login = f"http{url}/login"
 # stream
 token = ""
 # open binary file in read mode
-image = base64.encodestring(open('HelloImage.png', 'rb').read())
+image = base64.encodebytes(open('HelloImage.png', 'rb').read())
 # body request
 register_or_login = {
-    "username": "pai",
-    "password": "123"
+    "username": "pai1",
+    "password": "1234"
 }
 # error managment
 res = requests.post(url_register, register_or_login)

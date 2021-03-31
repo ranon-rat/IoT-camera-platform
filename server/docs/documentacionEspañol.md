@@ -71,25 +71,6 @@ func getConnection() (*sql.DB,error){}
 
 la base de datos con la que se conecta es `iotcameradata.db` ahi en la funcion `getConnection()` se conecta de manera directa asi que no hace falta hacer mucho
 
-## exist()
-
-la funcion `exist()` es para poder saber si el usuario que se ha tratado de registrar ya existe asi se puede evitar algunos problemas cuando registramos el usuario,
-el query que ejecuta esta funcion es
-
-```sql
-SELECT COUNT(*)
-		FROM usercameras
-		where username=? OR ip=? ;`
-```
-
-y la funcion es
-
-```go
-func exist(user string,ip string,sizeChan chan int) error
-```
-
-asi que te puede regresar un error y se debe de usar de manera concurrente `go exist("Fgh","127.0.0.1",sizeChan)`
-
 ---
 
 ## registerUserCameraDatabase()
