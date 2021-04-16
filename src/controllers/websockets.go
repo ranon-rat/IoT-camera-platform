@@ -29,7 +29,7 @@ func ControlData(conn *websocket.Conn) {
 			delete(stuff.VideoCamera, name) // if the client close the conn we delete the user from the map called videoCamera
 			return
 		}
-		json.Unmarshal(userJSON, user) // this is for decode the formulary
+		json.Unmarshal(userJSON, &user) // this is for decode the formulary
 		if valid {
 			stuff.VideoCamera[name] = user.Image // if all is good this add the video to the variable
 			log.Println("we did it ")
