@@ -18,5 +18,5 @@ RUN rm -rf ./IoT-Platform/src/frontend/public/script/*.ts
 RUN apt-get remove nodejs -y && apt-get remove npm -y
 
 WORKDIR /go/IoT-Platform
-
+#execute the programm
 CMD ["bash","init.sh"]
