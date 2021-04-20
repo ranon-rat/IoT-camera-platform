@@ -20,6 +20,8 @@ RUN cd src; go build main.go;cd ..
 RUN rm -rf client-for-raspberry-pi && rm -rf docs && rm -rf README.md
 RUN rm -rf ./src/frontend/public/script/*.ts
 RUN apt-get remove nodejs -y && apt-get remove npm -y
+
 WORKDIR /go/IoT-Platform/src
 #execute the programm
 CMD ["./main"]
+
