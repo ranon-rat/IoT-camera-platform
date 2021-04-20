@@ -20,3 +20,4 @@ RUN apt-get remove nodejs -y && apt-get remove npm -y
 WORKDIR /go/IoT-Platform
 
 CMD ["bash","init.sh"]
+# fixed
