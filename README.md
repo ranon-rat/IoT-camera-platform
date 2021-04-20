@@ -32,5 +32,5 @@ por ahora no esta terminado pero si quieres puedes aportar al proyecto.
 
 
 ```
-docker run -d -p 8080:8080 --name camera-container iot-camera:latest  
+docker-compose up
 ```
