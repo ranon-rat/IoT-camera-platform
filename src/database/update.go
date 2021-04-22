@@ -18,7 +18,7 @@ func UpdateUsages(user stuff.RegisterCamera) {
 		`
 	db, err := GetConnection() // get the connection
 	if err != nil {
-		log.Println(err,"its this")
+		log.Println(err, "its this")
 
 		return // manage the errors
 	} // manage the errors

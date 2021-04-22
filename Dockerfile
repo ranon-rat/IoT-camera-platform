@@ -13,15 +13,14 @@ WORKDIR /go/IoT-Platform
 
 RUN tsc ./src/frontend/public/script/*.ts
 RUN cat ./src/sql/initDatabase.sql | sqlite3 ./src/sql/iotcameradata.db
-# install the dependencies
-RUN go mod download
-RUN cd src; go build main.go;cd ..
+
 # CLEAR SOME TRASH
 RUN rm -rf client-for-raspberry-pi && rm -rf docs && rm -rf README.md
 RUN rm -rf ./src/frontend/public/script/*.ts
 RUN apt-get remove nodejs -y && apt-get remove npm -y
 
 WORKDIR /go/IoT-Platform/src
+RUN  go build main.go
 #execute the programm
 CMD ["./main"]
 

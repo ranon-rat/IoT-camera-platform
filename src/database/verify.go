@@ -41,8 +41,7 @@ func VerifyToken(camera stuff.StreamCamera, valid *bool, nameChan *string) {
 	*nameChan = name
 }
 
-
-// verify the cookies 
+// verify the cookies
 func VerifyTheCookie(cookieName string, validCookie chan bool) {
 	q := `SELECT COUNT(*) FROM userclients 
 			WHERE cookie =?1;

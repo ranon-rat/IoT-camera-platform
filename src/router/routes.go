@@ -14,13 +14,13 @@ import (
 func SetupRoutes() error {
 	log.Println("setup router")
 	r := mux.NewRouter()
-	
+
 	r.HandleFunc("/", controllers.LoginClientFromCamera)
-	r.HandleFunc(`/frontend/{file:[\/\w\d\W]+?}`, func(w http.ResponseWriter, r *http.Request){
+	r.HandleFunc(`/frontend/{file:[\/\w\d\W]+?}`, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, r.URL.Path[1:])
 	})
 	r.HandleFunc("/register", controllers.RegisterUser)
-	
+
 	r.HandleFunc("/login", controllers.LoginUserCamera)
 	r.HandleFunc("/videoHandle", controllers.ReceiveImages)
 	r.HandleFunc("/start/{user}", func(w http.ResponseWriter, r *http.Request) {

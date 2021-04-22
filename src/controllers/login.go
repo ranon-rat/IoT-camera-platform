@@ -22,14 +22,15 @@ func LoginUserCamera(w http.ResponseWriter, r *http.Request) {
 		//  we use this for asynchronous communication
 		valid, token := make(chan bool), make(chan string)
 		// check if all is okay
-		
+
 		go database.LoginUserCameraDatabase(oldUser, valid)
 		// no es el login
-	
-		if <-valid{
-			
+
+		if <-valid {
+
 			go database.UpdateUsages(oldUser)
-		 // we update the last time that he send something
+			// we update the last time that he send something
+
 			go database.GenerateToken(oldUser, token)
 
 			w.Write([]byte(<-token))
@@ -50,17 +51,15 @@ func LoginClientFromCamera(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 
-		valid,  newUserReal := make(chan bool), stuff.RegisterCamera{}
+		valid, newUserReal := make(chan bool), stuff.RegisterCamera{}
 		json.NewDecoder(r.Body).Decode(&newUserReal)
 		go database.LoginUserCameraDatabase(newUserReal, valid)
 		if <-valid {
-			
-		
+
 			valueCookie := *stuff.EncryptData(fmt.Sprintf("%s%f%s",
-				 newUserReal.Password, rand.Float64()*1000,
+				newUserReal.Password, rand.Float64()*1000,
 				newUserReal.Username))
 
-			
 			go database.AddTheCookieToTheDatabase(newUserReal.Username, valueCookie)
 
 			http.SetCookie(w, &http.Cookie{

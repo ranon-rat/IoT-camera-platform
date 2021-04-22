@@ -7,11 +7,6 @@ import (
 	"github.com/ranon-rat/IoT-camera-platform/server/src/stuff"
 )
 
-
-
-
-
-
 func AddTheCookieToTheDatabase(id string, cookieName string) {
 	q := `INSERT INTO userclients(id_camera_client,cookie) VALUES(?1,?2);`
 	/**
@@ -31,4 +26,3 @@ func AddTheCookieToTheDatabase(id string, cookieName string) {
 	db.Exec(q, id, *stuff.EncryptData(cookieName))
 
 }
-

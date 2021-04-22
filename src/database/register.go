@@ -9,7 +9,7 @@ import (
 )
 
 // register func
-func RegisterUserCameraDatabase(user stuff.RegisterCamera, okay chan bool) {
+func RegisterUserCameraDatabase(user stuff.RegisterCamera) error {
 
 	// the query for insert the data
 	q := `
@@ -20,8 +20,8 @@ func RegisterUserCameraDatabase(user stuff.RegisterCamera, okay chan bool) {
 	db, err := GetConnection()
 	if err != nil {
 		log.Println(err)
-		okay <- false
-		return // manage the errors
+
+		return err // manage the errors
 	} // manage the errors
 
 	defer db.Close()
@@ -29,8 +29,8 @@ func RegisterUserCameraDatabase(user stuff.RegisterCamera, okay chan bool) {
 
 	stm, err := db.Prepare(q)
 	if err != nil {
-		okay <- false
-		return
+
+		return err
 	}
 
 	defer stm.Close()
@@ -42,26 +42,26 @@ func RegisterUserCameraDatabase(user stuff.RegisterCamera, okay chan bool) {
 		time.Now().UnixNano()/int64(time.Hour),
 	)
 	if err != nil {
-		okay <- false
+
 		log.Println(err)
-		return // manage the errors
+		return err // manage the errors
 	}
 
 	// if more than one file is affected we return an error
 	i, err := r.RowsAffected()
 	if err != nil {
-		okay <- false
+
 		log.Println(err)
-		return // manage the errors
+		return err // manage the errors
 	}
 	if i > 1 {
 		log.Printf("idk why a row has been afected lol\n the query was %s \n the ip was %s \n the password was %s \n the username was %s", q, *stuff.EncryptData(user.IP), *stuff.EncryptData(user.Password), user.Username)
 		if err != nil {
-			okay <- false
+
 			log.Println(err)
-			return // manage the errors
+			return err // manage the errors
 		}
 	}
-	okay <- true
+	return nil
 
 }

@@ -18,7 +18,7 @@ func GetConnection() (*sql.DB, error) {
 	if err != nil {
 		if _, file, _, ok := runtime.Caller(0); ok {
 			__dirname := path.Dir(file)
-			log.Println("__dirname:", __dirname,ok)
+			log.Println("__dirname:", __dirname, ok)
 		}
 		log.Println(err, "get connection")
 		return nil, err

@@ -21,7 +21,6 @@ func GenerateToken(user stuff.RegisterCamera, tokenChan chan string) {
 	if err != nil {
 		log.Println(err)
 		close(tokenChan)
-
 		return // manage the errors
 	}
 	// generate the token
@@ -35,4 +34,5 @@ func GenerateToken(user stuff.RegisterCamera, tokenChan chan string) {
 	// and send the token
 
 	tokenChan <- (token)
+
 }
